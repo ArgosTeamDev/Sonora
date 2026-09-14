@@ -1,0 +1,330 @@
+{
+  "albumOverlays": [
+    {
+      "id": "1097861387",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-09-28T19:37:54.055Z"
+    },
+    {
+      "id": "1097862870",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-01T19:37:54.055Z"
+    },
+    {
+      "id": "1109714933",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-04T19:37:54.055Z"
+    },
+    {
+      "id": "1471277623",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-07T19:37:54.055Z"
+    },
+    {
+      "id": "1440871877",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-10T19:37:54.055Z"
+    },
+    {
+      "id": "1440881722",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-13T19:37:54.055Z"
+    },
+    {
+      "id": "594061854",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-16T19:37:54.055Z"
+    },
+    {
+      "id": "1055803853",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-19T19:37:54.055Z"
+    },
+    {
+      "id": "268443092",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-22T19:37:54.055Z"
+    },
+    {
+      "id": "832060615",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-25T19:37:54.055Z"
+    },
+    {
+      "id": "168376392",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-28T19:37:54.056Z"
+    },
+    {
+      "id": "696884422",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-10-31T19:37:54.056Z"
+    },
+    {
+      "id": "697194953",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-11-03T19:37:54.056Z"
+    },
+    {
+      "id": "617154241",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-11-06T19:37:54.056Z"
+    },
+    {
+      "id": "1440783617",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-11-09T19:37:54.056Z"
+    },
+    {
+      "id": "1440858699",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-11-12T19:37:54.056Z"
+    },
+    {
+      "id": "1460471924",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-11-15T19:37:54.056Z"
+    },
+    {
+      "id": "1636789969",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-11-18T19:37:54.056Z"
+    },
+    {
+      "id": "1440825369",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-11-21T19:37:54.056Z"
+    },
+    {
+      "id": "1440838039",
+      "isAlbumOfTheMonth": false,
+      "editorialNote": null,
+      "createdAt": "2025-11-24T19:37:54.056Z"
+    },
+    {
+      "id": "304472345",
+      "isAlbumOfTheMonth": true,
+      "editorialNote": "Uno de los discos más redondos de José José: el barítono en su registro más íntimo, arropado por arreglos que suenan grandes sin perder la calidez del bolero. «Volcán» es la pieza que todo el mundo recuerda, pero el disco entero sostiene ese mismo pulso.",
+      "createdAt": "2025-10-15T19:37:54.055Z"
+    }
+  ],
+  "reviews": [
+    {
+      "id": "f987e6d6-d294-4dfa-85a8-37abb0b6fbe2",
+      "userId": "3c849185-97b1-4ddb-8ee3-41342793c70d",
+      "albumId": "268443092",
+      "rating": 5,
+      "text": "Perfect from start to finish. I put it on every Sunday.",
+      "isRelisten": true,
+      "listenedAt": "2026-09-08",
+      "version": 1,
+      "createdAt": "2026-09-08T19:37:54.056Z",
+      "updatedAt": "2026-09-08T19:37:54.056Z"
+    },
+    {
+      "id": "67087a3c-b495-415f-8b5c-ace8158acf34",
+      "userId": "3c849185-97b1-4ddb-8ee3-41342793c70d",
+      "albumId": "832060615",
+      "rating": 4.5,
+      "text": "Miles with an orchestra, absolutely wild.",
+      "isRelisten": false,
+      "listenedAt": "2026-09-01",
+      "version": 1,
+      "createdAt": "2026-09-01T19:37:54.056Z",
+      "updatedAt": "2026-09-01T19:37:54.056Z"
+    },
+    {
+      "id": "4c088ecb-585a-47bc-a044-fd779eb04e5f",
+      "userId": "3c849185-97b1-4ddb-8ee3-41342793c70d",
+      "albumId": "168376392",
+      "rating": 4,
+      "text": null,
+      "isRelisten": false,
+      "listenedAt": "2026-08-24",
+      "version": 1,
+      "createdAt": "2026-08-24T19:37:54.056Z",
+      "updatedAt": "2026-08-24T19:37:54.056Z"
+    },
+    {
+      "id": "cd788618-3d68-4fbd-a440-ffae8abcb3ff",
+      "userId": "3c849185-97b1-4ddb-8ee3-41342793c70d",
+      "albumId": "594061854",
+      "rating": 4.5,
+      "text": "Every track could be a single on its own.",
+      "isRelisten": false,
+      "listenedAt": "2026-08-04",
+      "version": 1,
+      "createdAt": "2026-08-04T19:37:54.056Z",
+      "updatedAt": "2026-08-04T19:37:54.056Z"
+    },
+    {
+      "id": "78f1a37e-88fe-4c0f-8d39-d4392d04fc53",
+      "userId": "3c849185-97b1-4ddb-8ee3-41342793c70d",
+      "albumId": "1097861387",
+      "rating": 5,
+      "text": "Twenty years ahead of everything else.",
+      "isRelisten": true,
+      "listenedAt": "2026-07-15",
+      "version": 1,
+      "createdAt": "2026-07-15T19:37:54.056Z",
+      "updatedAt": "2026-07-15T19:37:54.056Z"
+    },
+    {
+      "id": "9db84777-f194-4196-a400-d6569ae9f2c9",
+      "userId": "05dc0e74-9096-4cef-bde9-267c1b8bbf39",
+      "albumId": "1471277623",
+      "rating": 5,
+      "text": "Best concept album in hip hop I've heard.",
+      "isRelisten": false,
+      "listenedAt": "2026-09-10",
+      "version": 1,
+      "createdAt": "2026-09-10T19:37:54.056Z",
+      "updatedAt": "2026-09-10T19:37:54.056Z"
+    },
+    {
+      "id": "774bf1e0-0fbe-4c08-a50e-25a8c480a39b",
+      "userId": "05dc0e74-9096-4cef-bde9-267c1b8bbf39",
+      "albumId": "1440871877",
+      "rating": 5,
+      "text": "Dense, but every listen gives you something new.",
+      "isRelisten": true,
+      "listenedAt": "2026-09-05",
+      "version": 1,
+      "createdAt": "2026-09-05T19:37:54.056Z",
+      "updatedAt": "2026-09-05T19:37:54.056Z"
+    },
+    {
+      "id": "d16fb9a1-df40-4b85-bee1-caad2144211a",
+      "userId": "05dc0e74-9096-4cef-bde9-267c1b8bbf39",
+      "albumId": "1440881722",
+      "rating": 4,
+      "text": null,
+      "isRelisten": false,
+      "listenedAt": "2026-08-29",
+      "version": 1,
+      "createdAt": "2026-08-29T19:37:54.056Z",
+      "updatedAt": "2026-08-29T19:37:54.056Z"
+    },
+    {
+      "id": "276069bf-d11e-469e-921c-6c34a692a116",
+      "userId": "05dc0e74-9096-4cef-bde9-267c1b8bbf39",
+      "albumId": "697194953",
+      "rating": 4.5,
+      "text": "Pure nostalgia, impossible not to dance.",
+      "isRelisten": false,
+      "listenedAt": "2026-08-19",
+      "version": 1,
+      "createdAt": "2026-08-19T19:37:54.056Z",
+      "updatedAt": "2026-08-19T19:37:54.056Z"
+    },
+    {
+      "id": "29a2831e-5a08-4f60-a662-f3e6d9acf4ae",
+      "userId": "05dc0e74-9096-4cef-bde9-267c1b8bbf39",
+      "albumId": "617154241",
+      "rating": 4,
+      "text": "Feels more organic than the rest of their catalog.",
+      "isRelisten": false,
+      "listenedAt": "2026-08-11",
+      "version": 1,
+      "createdAt": "2026-08-11T19:37:54.056Z",
+      "updatedAt": "2026-08-11T19:37:54.056Z"
+    },
+    {
+      "id": "3f14cabe-f0c4-431b-b720-384e42dd8ea5",
+      "userId": "d0e732a3-bf8d-4321-8bd5-cee40d1cd556",
+      "albumId": "1440783617",
+      "rating": 4.5,
+      "text": "The album that got me into rock for real.",
+      "isRelisten": true,
+      "listenedAt": "2026-09-11",
+      "version": 1,
+      "createdAt": "2026-09-11T19:37:54.056Z",
+      "updatedAt": "2026-09-11T19:37:54.056Z"
+    },
+    {
+      "id": "bcc0ec6f-10c6-4a41-a5eb-9965a08ff4d8",
+      "userId": "d0e732a3-bf8d-4321-8bd5-cee40d1cd556",
+      "albumId": "1440858699",
+      "rating": 4,
+      "text": "Rawer and more honest than Nevermind.",
+      "isRelisten": false,
+      "listenedAt": "2026-09-04",
+      "version": 1,
+      "createdAt": "2026-09-04T19:37:54.056Z",
+      "updatedAt": "2026-09-04T19:37:54.056Z"
+    },
+    {
+      "id": "1e95739c-5bdc-4383-9ea7-f375de650317",
+      "userId": "d0e732a3-bf8d-4321-8bd5-cee40d1cd556",
+      "albumId": "1460471924",
+      "rating": 5,
+      "text": "Every visual tells a different story, and the album only sounds better.",
+      "isRelisten": false,
+      "listenedAt": "2026-08-30",
+      "version": 1,
+      "createdAt": "2026-08-30T19:37:54.056Z",
+      "updatedAt": "2026-08-30T19:37:54.056Z"
+    },
+    {
+      "id": "9ff75bab-16ec-4bd8-8aa1-2cea4d301317",
+      "userId": "d0e732a3-bf8d-4321-8bd5-cee40d1cd556",
+      "albumId": "1440838039",
+      "rating": 4.5,
+      "text": null,
+      "isRelisten": false,
+      "listenedAt": "2026-08-26",
+      "version": 1,
+      "createdAt": "2026-08-26T19:37:54.056Z",
+      "updatedAt": "2026-08-26T19:37:54.056Z"
+    },
+    {
+      "id": "a815784f-91ac-41a2-b605-a8c1a729a80c",
+      "userId": "d0e732a3-bf8d-4321-8bd5-cee40d1cd556",
+      "albumId": "1440825369",
+      "rating": 4,
+      "text": "Modern psychedelia made with real craft.",
+      "isRelisten": false,
+      "listenedAt": "2026-08-17",
+      "version": 1,
+      "createdAt": "2026-08-17T19:37:54.056Z",
+      "updatedAt": "2026-08-17T19:37:54.056Z"
+    }
+  ],
+  "follows": [
+    {
+      "followerId": "3c849185-97b1-4ddb-8ee3-41342793c70d",
+      "followingId": "05dc0e74-9096-4cef-bde9-267c1b8bbf39",
+      "createdAt": "2026-06-05T19:37:54.056Z"
+    },
+    {
+      "followerId": "05dc0e74-9096-4cef-bde9-267c1b8bbf39",
+      "followingId": "d0e732a3-bf8d-4321-8bd5-cee40d1cd556",
+      "createdAt": "2026-06-15T19:37:54.056Z"
+    },
+    {
+      "followerId": "d0e732a3-bf8d-4321-8bd5-cee40d1cd556",
+      "followingId": "3c849185-97b1-4ddb-8ee3-41342793c70d",
+      "createdAt": "2026-06-25T19:37:54.056Z"
+    }
+  ],
+  "favorites": []
+}

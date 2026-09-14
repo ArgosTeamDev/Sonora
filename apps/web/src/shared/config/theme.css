@@ -1,0 +1,37 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Surfaces */
+  --bg-base: #0f131c; /* page background */
+  --bg-deep: #0a0e17; /* footer, overlays */
+  --bg-surface: #181b25; /* cards, filter bar */
+  --bg-raised: #1c1f29; /* secondary buttons, inputs */
+  --bg-hover: #262a34; /* active state, chips */
+  --border: #424754;
+
+  /* Text */
+  --text-primary: #dfe2ef;
+  --text-secondary: #c2c6d6;
+  --text-muted: #8c909f;
+
+  /* Accent */
+  --accent: #adc6ff; /* active button, badges */
+  --accent-strong: #4d8eff; /* emphasis, glow */
+  --accent-cta: #0267b8; /* primary button */
+  --on-accent: #002e6a; /* text on --accent */
+  --on-cta: #d6e5ff; /* text on --accent-cta */
+
+  /* Destructive actions and errors. The only non-blue hue in the palette —
+     kept muted enough to sit quietly until it's actually needed. */
+  --danger: #f87171;
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: "Plus Jakarta Sans", system-ui, sans-serif;
+}
