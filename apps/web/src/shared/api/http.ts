@@ -1,3 +1,9 @@
+// Relative "/api" in dev relies on Vite's proxy (vite.config.ts) forwarding
+// to the local NestJS server — set VITE_API_URL (in .env.production or the
+// deployment's environment) once the frontend and API are on different
+// origins in production.
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? "/api";
+
 export class HttpError extends Error {
   constructor(
     public readonly status: number,
@@ -15,7 +21,7 @@ interface ApiErrorBody {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`/api${path}`, {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     credentials: "include", // the auth cookie is httpOnly, never touched by JS
     headers: {

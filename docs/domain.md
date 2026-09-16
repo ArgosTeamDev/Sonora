@@ -1,76 +1,76 @@
-# Domain
+# Dominio
 
-## What it is
+## Qué es
 
-A listening diary. The user rates the albums they listen to with a score
-from half a star to five, and, if they want, writes a review. Over time the
-profile becomes a record of what they were listening to and what they thought.
+Un diario de escucha. El usuario califica los álbumes que escucha con una
+puntuación de media estrella a cinco y, si quiere, escribe una reseña. Con el
+tiempo el perfil se vuelve un registro de qué estuvo escuchando y qué le pareció.
 
-The long paragraph the model came from:
+El párrafo largo del que salió el modelo:
 
-> A **user** rates **albums** from the catalog with a score from 0.5 to 5
-> stars and, if they want, writes a **review**. They can only have one rating
-> per album, but can edit it and mark it as a relisten. Each **album**
-> belongs to an **artist** and has one or more genres. Users can
-> **follow** each other and see their recent ratings in a feed. An album's
-> average rating is computed from all of its ratings.
+> Un **usuario** califica **álbumes** del catálogo con una puntuación de 0.5 a 5
+> estrellas y, si quiere, escribe una **reseña**. Solo puede tener una
+> calificación por álbum, pero puede editarla y marcarla como reescucha. Cada
+> **álbum** pertenece a un **artista** y tiene uno o más géneros. Los usuarios
+> pueden **seguirse** entre sí y ver sus calificaciones recientes en un feed. El
+> promedio de un álbum se calcula a partir de todas sus calificaciones.
 
-Nouns → entities: user, album, artist, review, follow.
-Verbs → use cases: rate, review, follow, explore.
+Sustantivos → entidades: user, album, artist, review, follow.
+Verbos → casos de uso: calificar, reseñar, seguir, explorar.
 
-## Who uses it
+## Quién la usa
 
-A single type of user. No roles or admin: the catalog comes
-preloaded from the seed.
+Un solo tipo de usuario. Sin roles ni administración: el catálogo viene
+precargado desde el seed.
 
-| Role | What they can do |
+| Rol | Qué puede hacer |
 |-----|-----------------|
-| User | Explore the catalog, rate, review, follow others, view profiles |
+| Usuario | Explorar el catálogo, calificar, reseñar, seguir a otros, ver perfiles |
 
-## Entities
+## Entidades
 
-| Entity | What it represents | Notes |
+| Entidad | Qué representa | Notas |
 |---------|----------------|-------|
-| `User` | Who rates | Unique `username`, used in the profile URL |
-| `Artist` | Who publishes the albums | Unique `slug` for the URL |
-| `Album` | The unit being rated | Belongs to an artist, has genres |
-| `Review` | **The central entity.** A user's rating of an album | N:M join table with its own data |
-| `Follow` | That a user follows another | A user's relation to itself |
+| `User` | Quien califica | `username` único, se usa en la URL del perfil |
+| `Artist` | Quien publica los álbumes | `slug` único para la URL |
+| `Album` | La unidad que se califica | Pertenece a un artista, tiene géneros |
+| `Review` | **La entidad central.** La calificación de un usuario sobre un álbum | Tabla intermedia N:M con datos propios |
+| `Follow` | Que un usuario sigue a otro | Relación de un usuario consigo mismo |
 
-## What can be done
+## Qué se puede hacer
 
-- [ ] Explore the catalog with filters by genre, year and sort order
-- [ ] View an album's detail with its average and other people's reviews
-- [ ] Rate an album (half to five stars)
-- [ ] Write, edit and delete a review for an album
-- [ ] Mark a rating as a relisten
-- [ ] View a user's profile and their reviews
-- [ ] View an artist's discography
-- [ ] Share a review's link
-- [ ] Follow other users and see their activity in a feed *(if time allows)*
+- [ ] Explorar el catálogo con filtros por género, año y orden
+- [ ] Ver el detalle de un álbum con su promedio y las reseñas de otros
+- [ ] Calificar un álbum (de media a cinco estrellas)
+- [ ] Escribir, editar y borrar la reseña de un álbum
+- [ ] Marcar una calificación como reescucha
+- [ ] Ver el perfil de un usuario y sus reseñas
+- [ ] Ver la discografía de un artista
+- [ ] Compartir el enlace de una reseña
+- [ ] Seguir a otros usuarios y ver su actividad en un feed *(si alcanza el tiempo)*
 
-## Business rules
+## Reglas de negocio
 
-These are the ones that live in `domain/`, not in the controller or the database:
+Estas son las que viven en `domain/`, no en el controller ni en la base de datos:
 
-1. A rating goes from 0.5 to 5, only in half-star steps.
-2. A user has **at most one review per album**. Trying to create a
-   second one responds `DUPLICATE_REVIEW` (409). To change it, the existing one is edited.
-3. You can rate without writing text. You can't write text without rating.
-4. A review can only be edited or deleted by its author.
-5. An album's average is **derived** data: it's computed on read, never stored.
-6. An album with no reviews has a `null` average, not `0`. Zero would be an
-   awful rating; `null` means "nobody has listened to it yet."
-7. A user cannot follow themselves, nor follow the same person twice.
+1. Una calificación va de 0.5 a 5, solo en saltos de media estrella.
+2. Un usuario tiene **como máximo una reseña por álbum**. Intentar crear una
+   segunda responde `DUPLICATE_REVIEW` (409). Para cambiarla, se edita la existente.
+3. Se puede calificar sin escribir texto. No se puede escribir texto sin calificar.
+4. Una reseña solo la puede editar o borrar su autor.
+5. El promedio de un álbum es dato **derivado**: se calcula al leer, nunca se guarda.
+6. Un álbum sin reseñas tiene promedio `null`, no `0`. Cero sería una calificación
+   pésima; `null` significa "todavía nadie lo ha escuchado".
+7. Un usuario no puede seguirse a sí mismo, ni seguir dos veces a la misma persona.
 
-## Out of scope
+## Fuera de alcance
 
-What we decided **not** to do in the first delivery:
+Lo que decidimos **no** hacer en la primera entrega:
 
-- **Individual tracks.** It would duplicate the whole model (track, track
-  rating, position in the album). The rating unit is the album.
-- **Real authentication.** The current user comes fixed from the seed.
-- **Ranked lists** like "My Top 10 of 2025." It's one more entity with its own UI.
-- **Spotify or MusicBrainz integration.** The catalog is a local seed.
-- **Likes and comments on reviews.**
-- **Text search.** Only filters by genre, year and artist.
+- **Canciones individuales.** Duplicaría el modelo entero (canción, calificación
+  de canción, posición en el álbum). La unidad de calificación es el álbum.
+- **Autenticación real.** El usuario actual viene fijo desde el seed.
+- **Listas ordenadas** tipo "Mis 10 de 2025". Es una entidad más con su propia UI.
+- **Integración con Spotify o MusicBrainz.** El catálogo es un seed local.
+- **Likes y comentarios en reseñas.**
+- **Búsqueda por texto.** Solo filtros por género, año y artista.

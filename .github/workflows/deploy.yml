@@ -1,0 +1,43 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Configurar acceso SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Desplegar backend (pull + build + restart)
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
+            set -e
+            cd ${{ secrets.API_PATH }}
+            git pull origin main
+            pnpm install
+            pnpm --filter shared build
+            pnpm --filter api build
+            pm2 restart api
+          '
+
+      - name: Desplegar frontend (build local + subir)
+        run: |
+          ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
+            set -e
+            cd ${{ secrets.API_PATH }}
+            echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > apps/web/.env
+            pnpm --filter web build
+            rsync -a --delete apps/web/dist/ ${{ secrets.WEB_HTDOCS_PATH }}/
+          '
+
+      - name: Limpiar clave temporal
+        if: always()
+        run: rm -f ~/.ssh/deploy_key

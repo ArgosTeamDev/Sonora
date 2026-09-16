@@ -170,7 +170,7 @@ export function ProfilePage(): JSX.Element {
       </p>
 
       <header className="flex flex-col gap-3">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
           <div className="flex min-w-0 flex-1 items-center gap-4">
             <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-strong text-section-title-lg text-text-primary">
               {(isEditing ? draftAvatarUrl : user.avatarUrl) ? (
@@ -202,7 +202,7 @@ export function ProfilePage(): JSX.Element {
               </p>
             </div>
           </div>
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
             {!isOwnProfile && currentUser && (
               <Button
                 variant={isFollowing ? "secondary" : "primary"}
