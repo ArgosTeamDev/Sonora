@@ -170,7 +170,7 @@ export function ProfilePage(): JSX.Element {
       </p>
 
       <header className="flex flex-col gap-3">
-        <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 flex-1 items-center gap-4">
             <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-strong text-section-title-lg text-text-primary">
               {(isEditing ? draftAvatarUrl : user.avatarUrl) ? (
@@ -202,27 +202,7 @@ export function ProfilePage(): JSX.Element {
               </p>
             </div>
           </div>
-          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:shrink-0">
-            {!isOwnProfile && currentUser && (
-              <Button
-                variant={isFollowing ? "secondary" : "primary"}
-                onClick={() => followUser.mutate(!isFollowing)}
-                disabled={followUser.isPending}
-                aria-pressed={isFollowing}
-              >
-                {isFollowing ? "Siguiendo" : "Seguir"}
-              </Button>
-            )}
-            {isOwnProfile && !isEditing && (
-              <>
-                <Button variant="secondary" onClick={handleStartEdit}>
-                  Editar perfil
-                </Button>
-                <Button variant="ghost" onClick={handleLogout} disabled={logout.isPending}>
-                  Cerrar sesión
-                </Button>
-              </>
-            )}
+          <div className="flex shrink-0 items-center gap-2">
             <Link
               to="/people"
               aria-label="Buscar perfiles"
@@ -240,6 +220,34 @@ export function ProfilePage(): JSX.Element {
             </button>
           </div>
         </div>
+
+        {!isEditing && !isOwnProfile && currentUser && (
+          <Button
+            variant={isFollowing ? "secondary" : "primary"}
+            onClick={() => followUser.mutate(!isFollowing)}
+            disabled={followUser.isPending}
+            aria-pressed={isFollowing}
+            className="self-start"
+          >
+            {isFollowing ? "Siguiendo" : "Seguir"}
+          </Button>
+        )}
+
+        {!isEditing && isOwnProfile && (
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={handleStartEdit} className="flex-1 sm:flex-none">
+              Editar perfil
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={handleLogout}
+              disabled={logout.isPending}
+              className="flex-1 sm:flex-none"
+            >
+              Cerrar sesión
+            </Button>
+          </div>
+        )}
 
         {isEditing ? (
           <div className="flex flex-col gap-2">
