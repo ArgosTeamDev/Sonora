@@ -20,6 +20,7 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
             set -e
+            git config --global --add safe.directory ${{ secrets.API_PATH }}
             cd ${{ secrets.API_PATH }}
             git pull origin main
             pnpm install
@@ -32,12 +33,13 @@ jobs:
         run: |
           ssh -i ~/.ssh/deploy_key ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} '
             set -e
+            git config --global --add safe.directory ${{ secrets.API_PATH }}
             cd ${{ secrets.API_PATH }}
             echo "VITE_API_URL=${{ secrets.VITE_API_URL }}" > apps/web/.env
             pnpm --filter web build
-            rsync -a --delete apps/web/dist/ ${{ secrets.WEB_HTDOCS_PATH }}/
+            rsync -rlD --delete apps/web/dist/ ${{ secrets.WEB_HTDOCS_PATH }}/
           '
-
+          
       - name: Limpiar clave temporal
         if: always()
         run: rm -f ~/.ssh/deploy_key
