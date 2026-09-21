@@ -6,7 +6,7 @@ export const UserSchema = z.object({
     .string()
     .min(3)
     .max(30)
-    .regex(/^[a-z0-9_]+$/, "Lowercase letters, numbers and underscores only"),
+    .regex(/^[a-z0-9_]+$/, "Solo minúsculas, números y guion bajo."),
   name: z.string().min(1),
   bio: z.string().max(300).nullable(),
   avatarUrl: z.string().url().nullable(),

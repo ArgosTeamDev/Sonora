@@ -7,8 +7,10 @@ export class ZodValidationPipe implements PipeTransform {
   transform(value: unknown): unknown {
     const result = this.schema.safeParse(value);
     if (!result.success) {
+      const [firstIssue] = result.error.issues;
       throw new BadRequestException({
         code: "VALIDATION",
+        message: firstIssue?.message ?? "Datos inválidos.",
         issues: result.error.issues,
       });
     }
