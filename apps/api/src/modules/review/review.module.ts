@@ -1,6 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ReviewController } from "./infrastructure/http/review.controller";
-import { JsonReviewRepository } from "./infrastructure/persistence/json/json-review.repository";
+import { PgReviewRepository } from "./infrastructure/persistence/pg/pg-review.repository";
 import { ReviewRepository } from "./domain/review.repository";
 import { ListReviewsUseCase } from "./application/list-reviews.use-case";
 import { GetReviewUseCase } from "./application/get-review.use-case";
@@ -11,7 +11,7 @@ import { DeleteReviewUseCase } from "./application/delete-review.use-case";
 @Module({
   controllers: [ReviewController],
   providers: [
-    { provide: ReviewRepository, useClass: JsonReviewRepository },
+    { provide: ReviewRepository, useClass: PgReviewRepository },
     ListReviewsUseCase,
     GetReviewUseCase,
     CreateReviewUseCase,

@@ -9,32 +9,32 @@ export class UserController {
   constructor(private readonly users: UserService) {}
 
   @Get()
-  list(@Query("q") q?: string): User[] {
+  list(@Query("q") q?: string): Promise<User[]> {
     return this.users.listAll(q);
   }
 
   @Get(":username")
-  getProfile(@Param("username") username: string): User {
+  getProfile(@Param("username") username: string): Promise<User> {
     return this.users.getByUsername(username);
   }
 
   @Get(":username/reviews")
-  getReviews(@Param("username") username: string): Review[] {
+  getReviews(@Param("username") username: string): Promise<Review[]> {
     return this.users.getReviews(username);
   }
 
   @Get(":username/following")
-  getFollowing(@Param("username") username: string): User[] {
+  getFollowing(@Param("username") username: string): Promise<User[]> {
     return this.users.getFollowing(username);
   }
 
   @Get(":username/followers")
-  getFollowers(@Param("username") username: string): User[] {
+  getFollowers(@Param("username") username: string): Promise<User[]> {
     return this.users.getFollowers(username);
   }
 
   @Get(":username/favorites")
-  getFavorites(@Param("username") username: string): Favorite[] {
+  getFavorites(@Param("username") username: string): Promise<Favorite[]> {
     return this.users.getFavorites(username);
   }
 
@@ -44,7 +44,7 @@ export class UserController {
     @Param("username") username: string,
     @Body(new ZodValidationPipe(UpdateUserDtoSchema)) dto: UpdateUserDto,
     @Req() req: AuthenticatedRequest,
-  ): User {
+  ): Promise<User> {
     if (req.authUser?.username !== username) {
       throw new ForbiddenException({ code: "FORBIDDEN", message: "Solo podés editar tu propio perfil." });
     }

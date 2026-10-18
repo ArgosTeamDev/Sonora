@@ -9,13 +9,14 @@ Inspired by [Letterboxd](https://letterboxd.com/).
 
 ## Getting started
 
-You need Node 20.11 (`nvm use`), pnpm 9 and Docker.
+You need Node 20.11 (`nvm use`), pnpm 9 and Docker (for Postgres).
 
 ```bash
 git clone <url> && cd rotacion
 cp .env.example .env
-pnpm setup     # installs dependencies and creates data/db.json from the seed
-pnpm dev       # api on :4000, web on :5173
+pnpm setup     # installs dependencies and starts Postgres (docker compose)
+pnpm dev       # api on :4000, web on :5173 (creates the tables on first boot)
+pnpm db:import # optional, once: loads the legacy data/ files into Postgres
 ```
 
 Open http://localhost:5173/#/explore
@@ -26,9 +27,9 @@ Open http://localhost:5173/#/explore
 |---|---|
 | `pnpm dev` | Runs api and web in parallel |
 | `pnpm build` | Builds both apps |
-| `pnpm db:up` | Starts Postgres in Docker |
+| `pnpm db:up` | Starts Postgres in Docker (port 5433) |
 | `pnpm db:reset` | Drops the volume and starts over |
-| `pnpm db:seed` | Regenerates `data/db.json` from the seed |
+| `pnpm db:import` | One-time import of `data/db.json` + `data/sonora.db` into Postgres |
 
 ## Structure
 
@@ -36,7 +37,7 @@ Open http://localhost:5173/#/explore
 apps/api/          NestJS · hexagonal
 apps/web/          React + Vite · SPA with hash routing
 packages/shared/   the contract: Zod schemas and types used by both
-data/              versioned db.seed.json · db.json is ignored
+data/              legacy JSON/SQLite files, only read by `pnpm db:import`
 docs/              domain, data model, decisions
 .claude/commands/  per-stage prompts for the agent
 ```
@@ -51,8 +52,10 @@ The backend is **hexagonal** in the review module, which is where the real
 business rules live. Read-only modules (albums, artists) go straight to
 persistence with no domain layer.
 
-Writes to the JSON go through a **serialized queue** and are saved with
-`tmp` + `rename`, so there are no corrupt files or writes stepping on each other.
+Everything lives in **PostgreSQL** (`DATABASE_URL`, default
+`postgres://sonora:sonora@localhost:5433/sonora`). The API creates its tables on
+startup. Album and artist data isn't stored: it comes live from iTunes, so
+`album_id` columns hold the iTunes `collectionId`.
 
 Every `PATCH` sends the `version` the client knows about. If it doesn't match the
 server's, it responds **409** instead of overwriting someone else's change.
@@ -65,7 +68,7 @@ server's, it responds **409** instead of overwriting someone else's change.
 
 ## Notes
 
-- `data/db.json` is in `.gitignore`. Only the seed is versioned.
+- In production set `DATABASE_URL` and `JWT_SECRET` in the environment of the `api` process (pm2).
 - Postgres runs on port **5433** to avoid clashing with local installs.
 - On Windows, work inside WSL2. Hot reload is very slow under `/mnt/c/`.
-- The album catalog is a local seed. It doesn't depend on any external API.
+- The album catalog comes from the iTunes Search API; only our own data lives in Postgres.

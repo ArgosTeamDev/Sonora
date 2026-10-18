@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: sonora
+      POSTGRES_PASSWORD: sonora
+      POSTGRES_DB: sonora
+    ports:
+      - "5433:5432" # 5433 to avoid clashing with a local Postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

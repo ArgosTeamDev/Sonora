@@ -8,4 +8,3 @@ export * from "./review";
 export * from "./follow";
 export * from "./favorite";
 export * from "./errors";
-export * from "./db";

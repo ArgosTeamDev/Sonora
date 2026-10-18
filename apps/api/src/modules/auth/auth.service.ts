@@ -14,15 +14,15 @@ export interface AuthResult {
 export class AuthService {
   constructor(private readonly users: UserRepository) {}
 
-  register(dto: RegisterDto): AuthResult {
-    if (this.users.existsByUsername(dto.username)) {
+  async register(dto: RegisterDto): Promise<AuthResult> {
+    if (await this.users.existsByUsername(dto.username)) {
       throw new ConflictException({
         code: "DUPLICATE_USERNAME",
         message: `El usuario "${dto.username}" ya existe.`,
       });
     }
 
-    const user = this.users.insert({
+    const user = await this.users.insert({
       id: randomUUID(),
       username: dto.username,
       name: dto.name,
@@ -33,8 +33,8 @@ export class AuthService {
     return { user, token: signToken({ sub: user.id, username: user.username }) };
   }
 
-  login(dto: LoginDto): AuthResult {
-    const user = this.users.findByUsernameWithPassword(dto.username);
+  async login(dto: LoginDto): Promise<AuthResult> {
+    const user = await this.users.findByUsernameWithPassword(dto.username);
     if (!user || !verifyPassword(dto.password, user.passwordHash)) {
       throw new UnauthorizedException({
         code: "INVALID_CREDENTIALS",
@@ -46,7 +46,7 @@ export class AuthService {
     return { user: publicUser, token: signToken({ sub: user.id, username: user.username }) };
   }
 
-  me(userId: string): User | null {
+  me(userId: string): Promise<User | null> {
     return this.users.findById(userId);
   }
 }

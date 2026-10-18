@@ -1,6 +1,5 @@
 import { Module } from "@nestjs/common";
-import { JsonDbModule } from "./shared/json-db/json-db.module";
-import { SqliteModule } from "./shared/db/sqlite.module";
+import { PgModule } from "./shared/db/pg.module";
 import { ReviewModule } from "./modules/review/review.module";
 import { AlbumModule } from "./modules/album/album.module";
 import { UserModule } from "./modules/user/user.module";
@@ -10,8 +9,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 
 @Module({
   imports: [
-    JsonDbModule,
-    SqliteModule,
+    PgModule,
     ReviewModule,
     AlbumModule,
     UserModule,
