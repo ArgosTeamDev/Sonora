@@ -1,59 +1,49 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import type { Favorite, Review, UpdateUserDto, User } from "@project/shared";
-import { JsonDb } from "@/shared/json-db/json-db.service";
+import { ReviewRepository } from "@/modules/review/domain/review.repository";
 import { UserRepository } from "./user.repository";
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly users: UserRepository,
-    private readonly db: JsonDb,
+    private readonly reviews: ReviewRepository,
   ) {}
 
-  listAll(query?: string): User[] {
+  listAll(query?: string): Promise<User[]> {
     return this.users.findAll(query);
   }
 
-  getByUsername(username: string): User {
-    const user = this.users.findByUsername(username);
+  async getByUsername(username: string): Promise<User> {
+    const user = await this.users.findByUsername(username);
     if (!user) {
       throw new NotFoundException({ code: "NOT_FOUND", message: `User ${username} not found` });
     }
     return user;
   }
 
-  getReviews(username: string): Review[] {
-    const user = this.getByUsername(username);
-    return this.db.state.reviews.filter((r) => r.userId === user.id);
+  async getReviews(username: string): Promise<Review[]> {
+    const user = await this.getByUsername(username);
+    return this.reviews.findByUser(user.id);
   }
 
-  getFollowing(username: string): User[] {
-    const user = this.getByUsername(username);
-    const followingIds = [
-      ...new Set(this.db.state.follows.filter((f) => f.followerId === user.id).map((f) => f.followingId)),
-    ];
-    return followingIds
-      .map((id) => this.users.findById(id))
-      .filter((u): u is User => u !== null);
+  async getFollowing(username: string): Promise<User[]> {
+    const user = await this.getByUsername(username);
+    return this.users.findFollowing(user.id);
   }
 
-  getFollowers(username: string): User[] {
-    const user = this.getByUsername(username);
-    const followerIds = [
-      ...new Set(this.db.state.follows.filter((f) => f.followingId === user.id).map((f) => f.followerId)),
-    ];
-    return followerIds
-      .map((id) => this.users.findById(id))
-      .filter((u): u is User => u !== null);
+  async getFollowers(username: string): Promise<User[]> {
+    const user = await this.getByUsername(username);
+    return this.users.findFollowers(user.id);
   }
 
-  getFavorites(username: string): Favorite[] {
-    const user = this.getByUsername(username);
-    return this.db.state.favorites.filter((f) => f.userId === user.id);
+  async getFavorites(username: string): Promise<Favorite[]> {
+    const user = await this.getByUsername(username);
+    return this.users.findFavorites(user.id);
   }
 
-  update(username: string, dto: UpdateUserDto): User {
-    const user = this.getByUsername(username);
+  async update(username: string, dto: UpdateUserDto): Promise<User> {
+    const user = await this.getByUsername(username);
     if (user.version !== dto.version) {
       throw new ConflictException({
         code: "STALE_VERSION",

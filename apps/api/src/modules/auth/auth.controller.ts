@@ -11,21 +11,21 @@ export class AuthController {
   constructor(private readonly auth: AuthService) {}
 
   @Post("register")
-  register(
+  async register(
     @Body(new ZodValidationPipe(RegisterDtoSchema)) dto: RegisterDto,
     @Res({ passthrough: true }) res: Response,
-  ): User {
-    const { user, token } = this.auth.register(dto);
+  ): Promise<User> {
+    const { user, token } = await this.auth.register(dto);
     setAuthCookie(res, token);
     return user;
   }
 
   @Post("login")
-  login(
+  async login(
     @Body(new ZodValidationPipe(LoginDtoSchema)) dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
-  ): User {
-    const { user, token } = this.auth.login(dto);
+  ): Promise<User> {
+    const { user, token } = await this.auth.login(dto);
     setAuthCookie(res, token);
     return user;
   }
@@ -38,8 +38,8 @@ export class AuthController {
 
   @Get("me")
   @UseGuards(AuthGuard)
-  me(@Req() req: AuthenticatedRequest): User {
-    const user = req.authUser ? this.auth.me(req.authUser.id) : null;
+  async me(@Req() req: AuthenticatedRequest): Promise<User> {
+    const user = req.authUser ? await this.auth.me(req.authUser.id) : null;
     if (!user) {
       throw new NotFoundException({ code: "NOT_FOUND", message: "Sesión inválida." });
     }

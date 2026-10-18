@@ -1,27 +1,32 @@
 import { Injectable } from "@nestjs/common";
 import type { CreateFavoriteDto, Favorite } from "@project/shared";
-import { JsonDb } from "@/shared/json-db/json-db.service";
+import { MysqlService } from "@/shared/db/mysql.service";
+
+interface FavoriteRow {
+  user_id: string;
+  album_id: string;
+  created_at: Date;
+}
 
 @Injectable()
 export class FavoriteService {
-  constructor(private readonly db: JsonDb) {}
+  constructor(private readonly db: MysqlService) {}
 
   async create(dto: CreateFavoriteDto): Promise<Favorite> {
-    const existing = this.db.state.favorites.find(
-      (f) => f.userId === dto.userId && f.albumId === dto.albumId,
+    // Idempotent: favoriting twice returns the existing row.
+    await this.db.execute(
+      `INSERT IGNORE INTO favorites (user_id, album_id, created_at) VALUES (?, ?, UTC_TIMESTAMP(3))`,
+      [dto.userId, dto.albumId],
     );
-    if (existing) return existing;
-
-    const favorite: Favorite = { ...dto, createdAt: new Date() };
-    await this.db.mutate((data) => {
-      data.favorites.push(favorite);
-    });
-    return favorite;
+    const rows = await this.db.select<FavoriteRow>(
+      `SELECT user_id, album_id, created_at FROM favorites WHERE user_id = ? AND album_id = ?`,
+      [dto.userId, dto.albumId],
+    );
+    const row = rows[0]!;
+    return { userId: row.user_id, albumId: row.album_id, createdAt: row.created_at };
   }
 
   async remove(userId: string, albumId: string): Promise<void> {
-    await this.db.mutate((data) => {
-      data.favorites = data.favorites.filter((f) => !(f.userId === userId && f.albumId === albumId));
-    });
+    await this.db.execute(`DELETE FROM favorites WHERE user_id = ? AND album_id = ?`, [userId, albumId]);
   }
 }
