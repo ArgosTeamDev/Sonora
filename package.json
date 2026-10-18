@@ -9,10 +9,11 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
-    "setup": "pnpm install && pnpm db:up",
+    "setup": "pnpm install && pnpm db:up && pnpm db:migrate",
     "db:up": "docker compose up -d db",
     "db:reset": "docker compose down -v && docker compose up -d db",
-    "db:import": "node scripts/migrate-to-postgres.mjs"
+    "db:import": "node scripts/import-legacy-data.mjs",
+    "db:migrate": "pnpm --filter api migrate up"
   },
   "devDependencies": {
     "turbo": "^2.1.3"

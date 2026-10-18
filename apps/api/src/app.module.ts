@@ -1,5 +1,5 @@
 import { Module } from "@nestjs/common";
-import { PgModule } from "./shared/db/pg.module";
+import { MysqlModule } from "./shared/db/mysql.module";
 import { ReviewModule } from "./modules/review/review.module";
 import { AlbumModule } from "./modules/album/album.module";
 import { UserModule } from "./modules/user/user.module";
@@ -9,7 +9,7 @@ import { AuthModule } from "./modules/auth/auth.module";
 
 @Module({
   imports: [
-    PgModule,
+    MysqlModule,
     ReviewModule,
     AlbumModule,
     UserModule,

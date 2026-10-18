@@ -3,7 +3,7 @@ import type { AlbumWithArtist } from "../domain/album.repository";
 
 // Shared by list/get so both use-cases compute averageRating/totalReviews
 // the same way, regardless of which AlbumRepository supplied the catalog
-// data (Postgres overlay + iTunes).
+// data (MySQL overlay + iTunes).
 export function withStats(album: AlbumWithArtist, allReviews: Review[]): AlbumWithStats {
   const reviews = allReviews.filter((r) => r.albumId === album.id);
   const averageRating =

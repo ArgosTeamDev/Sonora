@@ -1,20 +1,25 @@
 import { Injectable } from "@nestjs/common";
 import type { CreateFollowDto, Follow } from "@project/shared";
-import { PgService } from "@/shared/db/pg.service";
+import { MysqlService } from "@/shared/db/mysql.service";
+
+interface FollowRow {
+  follower_id: string;
+  following_id: string;
+  created_at: Date;
+}
 
 @Injectable()
 export class FollowService {
-  constructor(private readonly pg: PgService) {}
+  constructor(private readonly db: MysqlService) {}
 
   async create(dto: CreateFollowDto): Promise<Follow> {
     // Idempotent: following someone twice returns the existing row.
-    await this.pg.query(
-      `INSERT INTO follows (follower_id, following_id, created_at) VALUES ($1, $2, now())
-       ON CONFLICT (follower_id, following_id) DO NOTHING`,
+    await this.db.execute(
+      `INSERT IGNORE INTO follows (follower_id, following_id, created_at) VALUES (?, ?, UTC_TIMESTAMP(3))`,
       [dto.followerId, dto.followingId],
     );
-    const { rows } = await this.pg.query<{ follower_id: string; following_id: string; created_at: Date }>(
-      `SELECT follower_id, following_id, created_at FROM follows WHERE follower_id = $1 AND following_id = $2`,
+    const rows = await this.db.select<FollowRow>(
+      `SELECT follower_id, following_id, created_at FROM follows WHERE follower_id = ? AND following_id = ?`,
       [dto.followerId, dto.followingId],
     );
     const row = rows[0]!;
@@ -22,7 +27,7 @@ export class FollowService {
   }
 
   async remove(followerId: string, followingId: string): Promise<void> {
-    await this.pg.query(`DELETE FROM follows WHERE follower_id = $1 AND following_id = $2`, [
+    await this.db.execute(`DELETE FROM follows WHERE follower_id = ? AND following_id = ?`, [
       followerId,
       followingId,
     ]);

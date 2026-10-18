@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import type { Favorite, User } from "@project/shared";
-import { PgService } from "@/shared/db/pg.service";
+import { MysqlService } from "@/shared/db/mysql.service";
 
 interface UserRow {
   id: string;
@@ -34,50 +34,47 @@ function toUserWithPasswordHash(row: UserRow): UserWithPasswordHash {
 }
 
 const USER_COLUMNS = `u.id, u.username, u.name, u.bio, u.avatar_url, u.password_hash, u.created_at, u.version`;
-const RETURNING = `RETURNING id, username, name, bio, avatar_url, password_hash, created_at, version`;
 
 // password_hash never leaves this file: every other layer works with the
 // public `User` shape from @project/shared.
 @Injectable()
 export class UserRepository {
-  constructor(private readonly pg: PgService) {}
+  constructor(private readonly db: MysqlService) {}
 
   async findAll(query?: string): Promise<User[]> {
     const normalized = query?.trim().toLowerCase();
-    const { rows } = normalized
-      ? await this.pg.query<UserRow>(
+    const rows = normalized
+      ? await this.db.select<UserRow>(
           `SELECT ${USER_COLUMNS} FROM users u
-           WHERE lower(u.username) LIKE $1 OR lower(u.name) LIKE $1 ORDER BY u.username`,
-          [`%${normalized}%`],
+           WHERE lower(u.username) LIKE ? OR lower(u.name) LIKE ? ORDER BY u.username`,
+          [`%${normalized}%`, `%${normalized}%`],
         )
-      : await this.pg.query<UserRow>(`SELECT ${USER_COLUMNS} FROM users u ORDER BY u.username`);
+      : await this.db.select<UserRow>(`SELECT ${USER_COLUMNS} FROM users u ORDER BY u.username`);
     return rows.map(toUser);
   }
 
   async findById(id: string): Promise<User | null> {
-    const { rows } = await this.pg.query<UserRow>(`SELECT ${USER_COLUMNS} FROM users u WHERE u.id = $1`, [id]);
+    const rows = await this.db.select<UserRow>(`SELECT ${USER_COLUMNS} FROM users u WHERE u.id = ?`, [id]);
     return rows[0] ? toUser(rows[0]) : null;
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    const { rows } = await this.pg.query<UserRow>(
-      `SELECT ${USER_COLUMNS} FROM users u WHERE u.username = $1`,
-      [username],
-    );
+    const rows = await this.db.select<UserRow>(`SELECT ${USER_COLUMNS} FROM users u WHERE u.username = ?`, [
+      username,
+    ]);
     return rows[0] ? toUser(rows[0]) : null;
   }
 
   async findByUsernameWithPassword(username: string): Promise<UserWithPasswordHash | null> {
-    const { rows } = await this.pg.query<UserRow>(
-      `SELECT ${USER_COLUMNS} FROM users u WHERE u.username = $1`,
-      [username],
-    );
+    const rows = await this.db.select<UserRow>(`SELECT ${USER_COLUMNS} FROM users u WHERE u.username = ?`, [
+      username,
+    ]);
     return rows[0] ? toUserWithPasswordHash(rows[0]) : null;
   }
 
   async existsByUsername(username: string): Promise<boolean> {
-    const { rowCount } = await this.pg.query(`SELECT 1 FROM users WHERE username = $1`, [username]);
-    return (rowCount ?? 0) > 0;
+    const rows = await this.db.select(`SELECT 1 FROM users WHERE username = ?`, [username]);
+    return rows.length > 0;
   }
 
   async insert(user: {
@@ -87,12 +84,14 @@ export class UserRepository {
     passwordHash: string;
     createdAt: Date;
   }): Promise<User> {
-    const { rows } = await this.pg.query<UserRow>(
+    await this.db.execute(
       `INSERT INTO users (id, username, name, bio, avatar_url, password_hash, created_at, version)
-       VALUES ($1, $2, $3, NULL, NULL, $4, $5, 1) ${RETURNING}`,
+       VALUES (?, ?, ?, NULL, NULL, ?, ?, 1)`,
       [user.id, user.username, user.name, user.passwordHash, user.createdAt],
     );
-    return toUser(rows[0]!);
+    const created = await this.findById(user.id);
+    if (!created) throw new Error(`Failed to read back inserted user ${user.id}`);
+    return created;
   }
 
   async update(
@@ -100,48 +99,49 @@ export class UserRepository {
     patch: { name?: string; bio?: string | null; avatarUrl?: string | null },
     nextVersion: number,
   ): Promise<User> {
-    const { rows } = await this.pg.query<UserRow>(
+    await this.db.execute(
       `UPDATE users SET
-         name = COALESCE($2, name),
-         bio = CASE WHEN $3::boolean THEN $4 ELSE bio END,
-         avatar_url = CASE WHEN $5::boolean THEN $6 ELSE avatar_url END,
-         version = $7
-       WHERE id = $1 ${RETURNING}`,
+         name = COALESCE(?, name),
+         bio = IF(?, ?, bio),
+         avatar_url = IF(?, ?, avatar_url),
+         version = ?
+       WHERE id = ?`,
       [
-        id,
         patch.name ?? null,
         patch.bio !== undefined,
         patch.bio ?? null,
         patch.avatarUrl !== undefined,
         patch.avatarUrl ?? null,
         nextVersion,
+        id,
       ],
     );
-    if (!rows[0]) throw new Error(`User ${id} not found`);
-    return toUser(rows[0]!);
+    const updated = await this.findById(id);
+    if (!updated) throw new Error(`User ${id} not found`);
+    return updated;
   }
 
   async findFollowing(userId: string): Promise<User[]> {
-    const { rows } = await this.pg.query<UserRow>(
+    const rows = await this.db.select<UserRow>(
       `SELECT ${USER_COLUMNS} FROM follows f JOIN users u ON u.id = f.following_id
-       WHERE f.follower_id = $1 ORDER BY f.created_at`,
+       WHERE f.follower_id = ? ORDER BY f.created_at`,
       [userId],
     );
     return rows.map(toUser);
   }
 
   async findFollowers(userId: string): Promise<User[]> {
-    const { rows } = await this.pg.query<UserRow>(
+    const rows = await this.db.select<UserRow>(
       `SELECT ${USER_COLUMNS} FROM follows f JOIN users u ON u.id = f.follower_id
-       WHERE f.following_id = $1 ORDER BY f.created_at`,
+       WHERE f.following_id = ? ORDER BY f.created_at`,
       [userId],
     );
     return rows.map(toUser);
   }
 
   async findFavorites(userId: string): Promise<Favorite[]> {
-    const { rows } = await this.pg.query<{ user_id: string; album_id: string; created_at: Date }>(
-      `SELECT user_id, album_id, created_at FROM favorites WHERE user_id = $1 ORDER BY created_at`,
+    const rows = await this.db.select<{ user_id: string; album_id: string; created_at: Date }>(
+      `SELECT user_id, album_id, created_at FROM favorites WHERE user_id = ? ORDER BY created_at`,
       [userId],
     );
     return rows.map((r) => ({ userId: r.user_id, albumId: r.album_id, createdAt: r.created_at }));

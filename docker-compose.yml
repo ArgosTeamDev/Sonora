@@ -1,14 +1,15 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: mysql:8.4
     environment:
-      POSTGRES_USER: sonora
-      POSTGRES_PASSWORD: sonora
-      POSTGRES_DB: sonora
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: sonora
+      MYSQL_USER: sonora
+      MYSQL_PASSWORD: sonora
     ports:
-      - "5433:5432" # 5433 to avoid clashing with a local Postgres
+      - "3307:3306" # 3307 to avoid clashing with a local MySQL
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mysqldata:/var/lib/mysql
 
 volumes:
-  pgdata:
+  mysqldata:

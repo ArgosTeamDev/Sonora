@@ -14,8 +14,8 @@ You need Node 20.11 (`nvm use`), pnpm 9 and Docker (for Postgres).
 ```bash
 git clone <url> && cd rotacion
 cp .env.example .env
-pnpm setup     # installs dependencies and starts Postgres (docker compose)
-pnpm dev       # api on :4000, web on :5173 (creates the tables on first boot)
+pnpm setup     # installs dependencies, starts Postgres (docker compose) and runs the migrations
+pnpm dev       # api on :4000, web on :5173
 pnpm db:import # optional, once: loads the legacy data/ files into Postgres
 ```
 
@@ -28,7 +28,8 @@ Open http://localhost:5173/#/explore
 | `pnpm dev` | Runs api and web in parallel |
 | `pnpm build` | Builds both apps |
 | `pnpm db:up` | Starts Postgres in Docker (port 5433) |
-| `pnpm db:reset` | Drops the volume and starts over |
+| `pnpm db:migrate` | Applies pending migrations (`apps/api/migrations`) |
+| `pnpm db:reset` | Drops the volume and starts over (then run `pnpm db:migrate`) |
 | `pnpm db:import` | One-time import of `data/db.json` + `data/sonora.db` into Postgres |
 
 ## Structure
@@ -53,8 +54,9 @@ business rules live. Read-only modules (albums, artists) go straight to
 persistence with no domain layer.
 
 Everything lives in **PostgreSQL** (`DATABASE_URL`, default
-`postgres://sonora:sonora@localhost:5433/sonora`). The API creates its tables on
-startup. Album and artist data isn't stored: it comes live from iTunes, so
+`postgres://sonora:sonora@localhost:5433/sonora`). The schema is versioned with
+**node-pg-migrate** (SQL files in `apps/api/migrations`); add one with
+`pnpm --filter api migrate create <name>`. Album and artist data isn't stored: it comes live from iTunes, so
 `album_id` columns hold the iTunes `collectionId`.
 
 Every `PATCH` sends the `version` the client knows about. If it doesn't match the
@@ -68,7 +70,7 @@ server's, it responds **409** instead of overwriting someone else's change.
 
 ## Notes
 
-- In production set `DATABASE_URL` and `JWT_SECRET` in the environment of the `api` process (pm2).
+- In production set `DATABASE_URL` and `JWT_SECRET` in the environment of the `api` process (pm2). The deploy workflow runs `migrate up` before restarting it.
 - Postgres runs on port **5433** to avoid clashing with local installs.
 - On Windows, work inside WSL2. Hot reload is very slow under `/mnt/c/`.
 - The album catalog comes from the iTunes Search API; only our own data lives in Postgres.
