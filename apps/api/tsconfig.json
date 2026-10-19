@@ -9,9 +9,7 @@
     "rootDir": "src",
     "baseUrl": ".",
     "paths": {
-      // "dist/*" is the runtime fallback: tsconfig-paths tries src/*.ts first (dev, under
-      // ts-node) and falls back to the compiled .js in dist when running `node dist/main.js`.
-      "@/*": ["src/*", "dist/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["src"]
