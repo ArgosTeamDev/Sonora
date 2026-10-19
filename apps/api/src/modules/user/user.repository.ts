@@ -71,11 +71,18 @@ export class UserRepository {
     return rows[0] ? toUser(rows[0]) : null;
   }
 
-  async findByUsernameWithPassword(username: string): Promise<UserWithPasswordHash | null> {
-    const rows = await this.db.select<UserRow>(`SELECT ${USER_COLUMNS} FROM users u WHERE u.username = ?`, [
-      username,
-    ]);
+  // Login accepts either handle; both are stored lowercase.
+  async findByIdentifierWithPassword(identifier: string): Promise<UserWithPasswordHash | null> {
+    const rows = await this.db.select<UserRow>(
+      `SELECT ${USER_COLUMNS} FROM users u WHERE u.username = ? OR u.email = ? LIMIT 1`,
+      [identifier, identifier],
+    );
     return rows[0] ? toUserWithPasswordHash(rows[0]) : null;
+  }
+
+  async existsByEmail(email: string): Promise<boolean> {
+    const rows = await this.db.select(`SELECT 1 FROM users WHERE email = ?`, [email]);
+    return rows.length > 0;
   }
 
   async existsByUsername(username: string): Promise<boolean> {
@@ -87,13 +94,15 @@ export class UserRepository {
     id: string;
     username: string;
     name: string;
+    email: string;
+    location: string | null;
     passwordHash: string;
     createdAt: Date;
   }): Promise<User> {
     await this.db.execute(
-      `INSERT INTO users (id, username, name, bio, avatar_url, password_hash, created_at, version)
-       VALUES (?, ?, ?, NULL, NULL, ?, ?, 1)`,
-      [user.id, user.username, user.name, user.passwordHash, user.createdAt],
+      `INSERT INTO users (id, username, name, email, bio, avatar_url, location, password_hash, created_at, version)
+       VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, 1)`,
+      [user.id, user.username, user.name, user.email, user.location, user.passwordHash, user.createdAt],
     );
     const created = await this.findById(user.id);
     if (!created) throw new Error(`Failed to read back inserted user ${user.id}`);

@@ -22,10 +22,19 @@ export class AuthService {
       });
     }
 
+    if (await this.users.existsByEmail(dto.email)) {
+      throw new ConflictException({
+        code: "DUPLICATE_EMAIL",
+        message: "Ya existe una cuenta con ese correo.",
+      });
+    }
+
     const user = await this.users.insert({
       id: randomUUID(),
       username: dto.username,
       name: dto.name,
+      email: dto.email,
+      location: dto.location || null,
       passwordHash: hashPassword(dto.password),
       createdAt: new Date(),
     });
@@ -34,16 +43,16 @@ export class AuthService {
   }
 
   async login(dto: LoginDto): Promise<AuthResult> {
-    const user = await this.users.findByUsernameWithPassword(dto.username);
+    const user = await this.users.findByIdentifierWithPassword(dto.identifier);
     if (!user || !verifyPassword(dto.password, user.passwordHash)) {
       throw new UnauthorizedException({
         code: "INVALID_CREDENTIALS",
-        message: "Usuario o contraseña incorrectos.",
+        message: "Usuario, correo o contraseña incorrectos.",
       });
     }
 
     const { passwordHash: _passwordHash, ...publicUser } = user;
-    return { user: publicUser, token: signToken({ sub: user.id, username: user.username }) };
+    return { user: publicUser, token: signToken({ sub: user.id, username: user.username }, dto.remember) };
   }
 
   me(userId: string): Promise<User | null> {

@@ -26,7 +26,7 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<User> {
     const { user, token } = await this.auth.login(dto);
-    setAuthCookie(res, token);
+    setAuthCookie(res, token, dto.remember);
     return user;
   }
 

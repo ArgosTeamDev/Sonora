@@ -3,11 +3,12 @@ import type { Response } from "express";
 export const COOKIE_NAME = "sonora_token";
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, matches the JWT's own expiry
 
-export function setAuthCookie(res: Response, token: string): void {
+// remember = false sets a session cookie (no maxAge): gone when the browser closes.
+export function setAuthCookie(res: Response, token: string, remember = true): void {
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    maxAge: MAX_AGE_MS,
+    ...(remember ? { maxAge: MAX_AGE_MS } : {}),
     path: "/",
   });
 }

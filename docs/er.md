@@ -16,6 +16,7 @@ erDiagram
         text        name
         text        bio        "nullable"
         text        avatar_url "nullable"
+        text        email      "UK, nullable, privado: solo para iniciar sesión, nunca se expone"
         text        location   "nullable, texto libre"
         text        badge      "nullable, chip junto al nombre (ej. 45 RPM)"
         bool        is_pro_curator "lo otorga el equipo, no se edita"
