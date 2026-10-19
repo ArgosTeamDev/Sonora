@@ -1,11 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import type { Review } from "@project/shared";
+import type { ListeningFormat, Review } from "@project/shared";
 import { createReview, reviewKeys, updateReview } from "@/entities/review/api";
 
 interface RateAlbumInput {
   rating: number;
   text?: string | null;
   isRelisten?: boolean;
+  format?: ListeningFormat | null;
+  formatDetail?: string | null;
 }
 
 interface UseRateAlbumParams {
@@ -32,6 +34,8 @@ export function useRateAlbum({ userId, albumId, existingReview }: UseRateAlbumPa
           rating: input.rating,
           text: input.text ?? existingReview.text,
           isRelisten: input.isRelisten ?? existingReview.isRelisten,
+          format: input.format === undefined ? existingReview.format : input.format,
+          formatDetail: input.formatDetail === undefined ? existingReview.formatDetail : input.formatDetail,
         });
       }
 
@@ -41,6 +45,8 @@ export function useRateAlbum({ userId, albumId, existingReview }: UseRateAlbumPa
         rating: input.rating,
         text: input.text ?? null,
         isRelisten: input.isRelisten ?? false,
+        format: input.format ?? null,
+        formatDetail: input.formatDetail ?? null,
         listenedAt: new Date(),
       });
     },
@@ -60,6 +66,8 @@ export function useRateAlbum({ userId, albumId, existingReview }: UseRateAlbumPa
                   rating: input.rating,
                   text: input.text ?? r.text,
                   isRelisten: input.isRelisten ?? r.isRelisten,
+                  format: input.format === undefined ? r.format : input.format,
+                  formatDetail: input.formatDetail === undefined ? r.formatDetail : input.formatDetail,
                 }
               : r,
           );
@@ -73,6 +81,8 @@ export function useRateAlbum({ userId, albumId, existingReview }: UseRateAlbumPa
           rating: input.rating,
           text: input.text ?? null,
           isRelisten: input.isRelisten ?? false,
+          format: input.format ?? null,
+          formatDetail: input.formatDetail ?? null,
           listenedAt: now,
           version: 1,
           createdAt: now,

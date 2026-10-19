@@ -7,6 +7,8 @@ const CACHE_TTL_MS = 60 * 60 * 1000;
 // MusicBrainz allows 1 request/second per client and requires an identifying
 // User-Agent; a little headroom avoids bursts being throttled.
 const MIN_GAP_MS = 1100;
+// Search hits below this relevance are almost always unrelated releases.
+const MIN_SCORE = 75;
 const USER_AGENT = process.env.MUSICBRAINZ_USER_AGENT ?? "Sonora/0.1 (https://sonora.cetiprojects.tech)";
 
 export interface MbRelease {
@@ -16,6 +18,7 @@ export interface MbRelease {
 
 export interface MbReleaseGroup {
   id: string;
+  score?: number; // search relevance, 0-100 (only on search hits)
   title: string;
   "first-release-date"?: string;
   "primary-type"?: string;
@@ -54,7 +57,7 @@ export class MusicBrainzClient {
   async searchReleaseGroups(term: string, limit = 10): Promise<MbReleaseGroup[]> {
     const url = `${MB_BASE}/release-group/?query=${encodeURIComponent(term)}&fmt=json&limit=${limit}`;
     const data = await this.http.json<MbSearchResponse>(url);
-    return data["release-groups"] ?? [];
+    return (data["release-groups"] ?? []).filter((g) => (g.score ?? 100) >= MIN_SCORE);
   }
 
   async releaseGroup(id: string): Promise<MbReleaseGroup | null> {

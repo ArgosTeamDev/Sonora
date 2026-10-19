@@ -14,17 +14,8 @@ import { MB_ID_PREFIX, isAlbumLike, pickRelease, toMusicBrainzAlbum } from "./mu
 // /search/album has no release date, so each hit needs its own album lookup.
 // Capped to keep one search well under Deezer's 50 requests / 5 s limit.
 const MAX_DEEZER_DETAILS = 12;
-// Below this many Deezer hits the query is probably something Deezer doesn't
-// carry, so MusicBrainz is consulted as well.
-const MIN_HITS_BEFORE_FALLBACK = 3;
-
-const dedupeKey = (a: AlbumWithArtist): string => `${normalize(a.artist.name)}|${normalize(a.title)}`;
-const normalize = (s: string): string =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "");
+// MusicBrainz's fuzzy matching is noisy, so it only steps in when Deezer finds
+// nothing at all — mixing it into a good Deezer result set just adds clutter.
 
 // Album ids say where an album lives: "dz-…" Deezer, "mb-…" MusicBrainz, and
 // anything else is a bare iTunes collectionId — which is what every review,
@@ -73,12 +64,7 @@ export class CatalogAlbumRepository extends AlbumRepository {
     if (term.length === 0) return [];
 
     let results = await this.searchDeezer(term);
-
-    if (results.length < MIN_HITS_BEFORE_FALLBACK) {
-      const seen = new Set(results.map(dedupeKey));
-      const extra = (await this.searchMusicBrainz(term)).filter((a) => !seen.has(dedupeKey(a)));
-      results = [...results, ...extra];
-    }
+    if (results.length === 0) results = await this.searchMusicBrainz(term);
 
     if (results.length === 0) {
       try {

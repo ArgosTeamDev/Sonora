@@ -3,7 +3,9 @@ import { ArtistSchema } from "./artist";
 import { TrackSchema } from "./track";
 
 export const AlbumSchema = z.object({
-  id: z.string().min(1), // iTunes collectionId, not a locally-generated id
+  // Provider-scoped: "dz-<id>" Deezer, "mb-<uuid>" MusicBrainz, bare number
+  // = iTunes collectionId (the original catalog). See CatalogAlbumRepository.
+  id: z.string().min(1),
   title: z.string().min(1),
   year: z.number().int().min(1900).max(2100),
   releaseDate: z.coerce.date(),

@@ -74,4 +74,4 @@ server's, it responds **409** instead of overwriting someone else's change.
 - In production set `DATABASE_URL` and `JWT_SECRET` in the environment of the `api` process (pm2); on CloudPanel use the credentials of the database you create for the site (`mysql://user:pass@127.0.0.1:3306/db`). The deploy workflow runs `migrate up` before restarting it.
 - MySQL runs on port **3307** to avoid clashing with local installs.
 - On Windows, work inside WSL2. Hot reload is very slow under `/mnt/c/`.
-- The album catalog comes from the iTunes Search API; only our own data lives in MySQL.
+- The album catalog is fetched live: search goes Deezer → MusicBrainz → iTunes, the browse list is the curated iTunes set. Responses are cached in memory (30–60 min). Album ids are provider-prefixed (`dz-…`, `mb-…`; a bare number is a legacy iTunes id). Only our own data lives in MySQL.

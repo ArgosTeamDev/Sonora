@@ -12,6 +12,7 @@ interface FavoriteReviewRowProps {
   onEdit?: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
+  variant?: "card" | "log";
 }
 
 // Same reasoning as FavoriteAlbumCard: needs its own useFavoriteAlbum call
@@ -25,6 +26,7 @@ export function FavoriteReviewRow({
   onEdit,
   onDelete,
   isDeleting,
+  variant,
 }: FavoriteReviewRowProps): JSX.Element {
   const favoriteAlbum = useFavoriteAlbum({ username, userId, albumId: album.id });
 
@@ -36,6 +38,7 @@ export function FavoriteReviewRow({
       onDelete={onDelete}
       isDeleting={isDeleting}
       isFavorite={isFavorite}
+      variant={variant}
       onToggleFavorite={() => favoriteAlbum.mutate(!isFavorite)}
     />
   );

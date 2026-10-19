@@ -7,4 +7,5 @@ export * from "./track";
 export * from "./review";
 export * from "./follow";
 export * from "./favorite";
+export * from "./list";
 export * from "./errors";

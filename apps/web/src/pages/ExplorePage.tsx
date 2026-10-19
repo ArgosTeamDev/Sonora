@@ -120,7 +120,7 @@ export function ExplorePage(): JSX.Element {
         <h1 className="text-page-title text-text-primary md:text-page-title-lg">Álbumes</h1>
         <p className="text-body text-text-secondary">
           {isSearching
-            ? `Resultados para "${query}", buscando en todo el catálogo de iTunes.`
+            ? `Resultados para "${query}", buscando en todo el catálogo musical.`
             : "Explorá el catálogo, organizado por género, década y calificación."}
         </p>
       </header>

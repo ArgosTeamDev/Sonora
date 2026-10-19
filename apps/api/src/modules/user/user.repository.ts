@@ -8,6 +8,9 @@ interface UserRow {
   name: string;
   bio: string | null;
   avatar_url: string | null;
+  location: string | null;
+  badge: string | null;
+  is_pro_curator: number;
   password_hash: string;
   created_at: Date;
   version: number;
@@ -24,6 +27,9 @@ function toUser(row: UserRow): User {
     name: row.name,
     bio: row.bio,
     avatarUrl: row.avatar_url,
+    location: row.location,
+    badge: row.badge,
+    isProCurator: Boolean(row.is_pro_curator),
     createdAt: row.created_at,
     version: row.version,
   };
@@ -33,7 +39,7 @@ function toUserWithPasswordHash(row: UserRow): UserWithPasswordHash {
   return { ...toUser(row), passwordHash: row.password_hash };
 }
 
-const USER_COLUMNS = `u.id, u.username, u.name, u.bio, u.avatar_url, u.password_hash, u.created_at, u.version`;
+const USER_COLUMNS = `u.id, u.username, u.name, u.bio, u.avatar_url, u.location, u.badge, u.is_pro_curator, u.password_hash, u.created_at, u.version`;
 
 // password_hash never leaves this file: every other layer works with the
 // public `User` shape from @project/shared.
@@ -96,7 +102,13 @@ export class UserRepository {
 
   async update(
     id: string,
-    patch: { name?: string; bio?: string | null; avatarUrl?: string | null },
+    patch: {
+      name?: string;
+      bio?: string | null;
+      avatarUrl?: string | null;
+      location?: string | null;
+      badge?: string | null;
+    },
     nextVersion: number,
   ): Promise<User> {
     await this.db.execute(
@@ -104,6 +116,8 @@ export class UserRepository {
          name = COALESCE(?, name),
          bio = IF(?, ?, bio),
          avatar_url = IF(?, ?, avatar_url),
+         location = IF(?, ?, location),
+         badge = IF(?, ?, badge),
          version = ?
        WHERE id = ?`,
       [
@@ -112,6 +126,10 @@ export class UserRepository {
         patch.bio ?? null,
         patch.avatarUrl !== undefined,
         patch.avatarUrl ?? null,
+        patch.location !== undefined,
+        patch.location ?? null,
+        patch.badge !== undefined,
+        patch.badge ?? null,
         nextVersion,
         id,
       ],

@@ -10,6 +10,12 @@ export const UserSchema = z.object({
   name: z.string().min(1),
   bio: z.string().max(300).nullable(),
   avatarUrl: z.string().url().nullable(),
+  // Free text ("Barcelona / CDMX"), shown next to the handle.
+  location: z.string().max(80).nullable().default(null),
+  // Short self-chosen chip next to the name ("45 RPM").
+  badge: z.string().max(24).nullable().default(null),
+  // Granted by the team, never self-service: it's omitted from UpdateUserDto.
+  isProCurator: z.boolean().default(false),
   createdAt: z.coerce.date(),
   // Optimistic locking for profile edits. Defaulted so seed records without
   // it still parse.
@@ -22,6 +28,7 @@ export const UpdateUserDtoSchema = UserSchema.omit({
   id: true,
   username: true,
   createdAt: true,
+  isProCurator: true,
 })
   .partial()
   .required({ version: true });

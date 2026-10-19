@@ -1,6 +1,8 @@
 import type { JSX } from "react";
 import { Link } from "react-router-dom";
 import type { AlbumWithStats, Review, User } from "@project/shared";
+import { relativeTime } from "@/shared/lib/relative-time";
+import { formatTag } from "../format";
 import { RatingStars } from "./RatingStars";
 
 interface ReviewCardProps {
@@ -13,32 +15,58 @@ function initials(username: string): string {
   return username.slice(0, 2).toUpperCase();
 }
 
-function timeAgo(iso: string): string {
-  const ms = Date.now() - new Date(iso).getTime();
-  const days = Math.floor(ms / 86_400_000);
-  if (days >= 1) return `hace ${days}d`;
-  const hours = Math.floor(ms / 3_600_000);
-  if (hours >= 1) return `hace ${hours}h`;
-  const minutes = Math.max(1, Math.floor(ms / 60_000));
-  return `hace ${minutes}m`;
-}
-
 const focusRing =
   "outline-none rounded focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-surface";
 
-// Rebuilt from Figma node 54:1805 ("Reseñas y Críticas de la Comunidad").
-// Dropped: the "Curador" role badge (no curator concept in the data model),
-// the format tag ("Vinilo 180g" — no format field on Review), and the
-// like/comment counters in the bottom bar (no social engagement entity).
-// "Relisten" replaces the design's numbered "4ta escucha registrada" since we
-// track a boolean, not a listen count.
+// A community review as it reads on the home page. One grid, two shapes:
+// on a phone the author row spans the top and the cover sits beside the
+// title; on desktop the cover takes the left column and everything else
+// stacks to its right. There's no like/reply counter — no engagement entity
+// exists — so the footer carries the listening format and "first listen /
+// relisten" instead.
 export function ReviewCard({ review, author, album }: ReviewCardProps): JSX.Element {
+  const tag = formatTag(review);
+  const albumHref = album ? `/albums/${album.id}` : "#";
+
   return (
-    <article className="flex gap-4 rounded-lg border border-border bg-bg-surface/80 p-4 backdrop-blur-sm sm:p-6">
+    <article className="grid grid-cols-[64px_minmax(0,1fr)] gap-x-3 gap-y-3 rounded-lg bg-bg-surface p-4 lg:grid-cols-[96px_minmax(0,1fr)] lg:gap-x-4 lg:p-5">
+      <header className="col-span-2 flex items-center justify-between gap-2 lg:col-span-1 lg:col-start-2 lg:row-start-1">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent-strong text-label text-text-primary lg:size-6 lg:rounded-full">
+            {author?.avatarUrl ? (
+              <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
+            ) : author ? (
+              initials(author.username)
+            ) : (
+              "?"
+            )}
+          </span>
+          <div className="flex min-w-0 flex-col lg:flex-row lg:items-baseline lg:gap-2">
+            <Link
+              to={`/u/${author?.username ?? ""}`}
+              className={`truncate text-secondary font-semibold text-text-primary ${focusRing}`}
+            >
+              {author?.name ?? "Desconocido"}
+            </Link>
+            <span className="text-label font-normal normal-case tracking-normal text-text-muted">
+              {relativeTime(review.listenedAt)}
+            </span>
+          </div>
+        </div>
+        {tag && (
+          <span className="shrink-0 rounded-xl bg-bg-hover px-2.5 py-0.5 text-label text-text-secondary lg:hidden">
+            {tag}
+          </span>
+        )}
+        <span className="hidden lg:block">
+          <RatingStars value={review.rating} readOnly label="Calificación" />
+        </span>
+      </header>
+
       <Link
-        to={album ? `/albums/${album.id}` : "#"}
+        to={albumHref}
         aria-label={album ? `Ver ${album.title}` : "Álbum desconocido"}
-        className={`relative size-24 shrink-0 overflow-hidden rounded border border-border/60 bg-bg-hover shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] ${focusRing}`}
+        className={`relative aspect-square w-full overflow-hidden rounded bg-bg-hover shadow-md lg:row-span-3 lg:row-start-1 lg:col-start-1 ${focusRing}`}
       >
         {album?.coverUrl ? (
           <img src={album.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
@@ -49,46 +77,36 @@ export function ReviewCard({ review, author, album }: ReviewCardProps): JSX.Elem
         )}
       </Link>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-cta text-label text-on-cta">
-            {author ? initials(author.username) : "?"}
+      <div className="flex min-w-0 flex-col justify-center gap-0.5 lg:col-start-2 lg:row-start-2 lg:flex-row lg:flex-wrap lg:items-baseline lg:justify-start lg:gap-x-2">
+        <Link to={albumHref} className={`truncate text-section-title-lg text-text-primary ${focusRing}`}>
+          {album?.title ?? "Álbum desconocido"}
+        </Link>
+        {album && (
+          <span className="truncate text-secondary text-text-muted">
+            <span className="hidden lg:inline">—</span> {album.artist.name}{" "}
+            <span className="hidden lg:inline">({album.year})</span>
+            <span className="lg:hidden">• {album.year}</span>
           </span>
-          <Link
-            to={`/u/${author?.username ?? ""}`}
-            className={`text-secondary font-semibold text-text-primary ${focusRing}`}
-          >
-            {author?.username ?? "Desconocido"}
-          </Link>
-          <span className="text-secondary text-text-muted">{timeAgo(review.createdAt.toString())}</span>
-          {review.isRelisten && (
-            <span className="ml-auto rounded-full bg-bg-raised px-2 py-0.5 text-label text-text-secondary">
-              Reescucha
-            </span>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-baseline gap-x-2">
-          <Link
-            to={album ? `/albums/${album.id}` : "#"}
-            className={`text-section-title-lg text-text-primary ${focusRing}`}
-          >
-            {album?.title ?? "Álbum desconocido"}
-          </Link>
-          {album && (
-            <span className="text-secondary text-text-muted">
-              de <span className="text-text-secondary">{album.artist.name}</span> ({album.year})
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2 pt-1">
+        )}
+        <span className="pt-1 lg:hidden">
           <RatingStars value={review.rating} readOnly label="Calificación" />
-          <span className="text-secondary font-bold text-accent">{review.rating.toFixed(1)}</span>
-        </div>
-
-        {review.text && <p className="pt-2 text-body text-text-secondary">{review.text}</p>}
+        </span>
       </div>
+
+      {review.text && (
+        <p className="col-span-2 line-clamp-4 text-body text-text-secondary lg:col-span-1 lg:col-start-2 lg:line-clamp-3">
+          {review.text}
+        </p>
+      )}
+
+      <footer className="col-span-2 flex items-center justify-between gap-2 border-t border-border/40 pt-3 lg:col-span-1 lg:col-start-2">
+        <span className="hidden text-label font-normal normal-case tracking-normal text-text-muted lg:inline">
+          {tag ?? ""}
+        </span>
+        <span className="ml-auto text-label uppercase text-text-muted">
+          {review.isRelisten ? "Reescucha" : "Primera escucha"}
+        </span>
+      </footer>
     </article>
   );
 }

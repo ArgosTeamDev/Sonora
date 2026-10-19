@@ -7,6 +7,8 @@ erDiagram
     ARTIST ||--o{ ALBUM   : publica
     USER   ||--o{ FOLLOW  : sigue
     USER   ||--o{ FOLLOW  : es_seguido
+    USER   ||--o{ LIST    : crea
+    LIST   ||--o{ LIST_ITEM : contiene
 
     USER {
         uuid        id         PK
@@ -14,6 +16,22 @@ erDiagram
         text        name
         text        bio        "nullable"
         text        avatar_url "nullable"
+        text        location   "nullable, texto libre"
+        text        badge      "nullable, chip junto al nombre (ej. 45 RPM)"
+        bool        is_pro_curator "lo otorga el equipo, no se edita"
+        timestamptz created_at
+    }
+    LIST {
+        uuid        id          PK
+        uuid        user_id     FK
+        text        name
+        text        description "nullable"
+        timestamptz created_at
+    }
+    LIST_ITEM {
+        uuid        list_id    PK, FK
+        text        album_id   PK "id del catálogo, sin FK"
+        int         position   "orden dentro de la lista"
         timestamptz created_at
     }
     ARTIST {
@@ -39,6 +57,8 @@ erDiagram
         numeric     rating      "0.5 a 5, saltos de 0.5"
         text        body        "nullable"
         bool        is_relisten
+        text        format        "nullable: vinyl, cassette, cd, digital, hi-res"
+        text        format_detail "nullable: 180G, 45 RPM, 96KHZ…"
         date        listened_at
         int         version     "bloqueo optimista"
         timestamptz created_at
@@ -67,6 +87,8 @@ erDiagram
 | Único `(user_id, album_id)` | Traduce a la base de datos la regla "una calificación por usuario por álbum". Sin esto, un doble clic crea dos reseñas |
 | El promedio **no** se guarda en `albums` | Es dato derivado. Guardarlo obliga a recalcularlo en cada escritura y a mantenerlo consistente. Se calcula al leer |
 | `FOLLOW` con dos FK a `USER` | Relación de una tabla consigo misma. PK compuesta `(follower_id, following_id)` para que nadie siga dos veces a la misma persona |
+| `format` en `REVIEW`, no en una tabla aparte | Es cómo se escuchó *esa vez*, un atributo de la reseña. De él salen los "Hábitos Auditivos" (porcentaje por formato, últimos 30 días) y la pestaña "Colección Física" (vinyl, cassette, cd) del perfil |
+| `LIST_ITEM` guarda `album_id` sin FK | Igual que `REVIEW` y `FAVORITE`: los álbumes vienen del catálogo externo y no se almacenan |
 | `genres` como array, no como tabla | No se administran ni tienen atributos propios. Normalizarlos añadiría dos tablas sin beneficio |
 | `mbid` y `spotify_id` nullable desde el inicio | No cuestan nada ahora y evitan una migración si alguna vez se enlaza con una API externa |
 | `rating` como `numeric`, no `int` | Las medias estrellas son parte del dominio. Guardar décimas y dividir escondería el modelo |

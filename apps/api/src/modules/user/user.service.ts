@@ -53,7 +53,13 @@ export class UserService {
 
     return this.users.update(
       user.id,
-      { name: dto.name, bio: dto.bio, avatarUrl: dto.avatarUrl },
+      {
+        name: dto.name,
+        bio: dto.bio,
+        avatarUrl: dto.avatarUrl,
+        location: dto.location,
+        badge: dto.badge,
+      },
       user.version + 1,
     );
   }

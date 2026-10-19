@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const ArtistSchema = z.object({
-  id: z.string().min(1), // iTunes artistId, not a locally-generated id
+  id: z.string().min(1), // provider artist id ("dz-…", "mb-…" or iTunes artistId)
   name: z.string().min(1),
   slug: z
     .string()

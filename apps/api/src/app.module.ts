@@ -5,6 +5,7 @@ import { AlbumModule } from "./modules/album/album.module";
 import { UserModule } from "./modules/user/user.module";
 import { FollowModule } from "./modules/follow/follow.module";
 import { FavoriteModule } from "./modules/favorite/favorite.module";
+import { ListModule } from "./modules/list/list.module";
 import { AuthModule } from "./modules/auth/auth.module";
 
 @Module({
@@ -15,6 +16,7 @@ import { AuthModule } from "./modules/auth/auth.module";
     UserModule,
     FollowModule,
     FavoriteModule,
+    ListModule,
     AuthModule,
   ],
 })

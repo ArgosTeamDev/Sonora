@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+export const LISTENING_FORMATS = ["vinyl", "cassette", "cd", "digital", "hi-res"] as const;
+export const ListeningFormatSchema = z.enum(LISTENING_FORMATS);
+export type ListeningFormat = z.infer<typeof ListeningFormatSchema>;
+
+// What counts as "Colección Física" on a profile.
+export const PHYSICAL_FORMATS: readonly ListeningFormat[] = ["vinyl", "cassette", "cd"];
+
 const isHalfStarStep = (value: number) => Number.isInteger(value * 2);
 
 export const ReviewSchema = z.object({
@@ -13,6 +20,10 @@ export const ReviewSchema = z.object({
     .refine(isHalfStarStep, "Rating must be in steps of 0.5"),
   text: z.string().max(5000).nullable(),
   isRelisten: z.boolean(),
+  // How it was listened to. Optional: reviews predating the field have none.
+  format: ListeningFormatSchema.nullable().default(null),
+  // Free-form qualifier for the format ("180G", "45 RPM", "96KHZ", "CHROME").
+  formatDetail: z.string().max(32).nullable().default(null),
   listenedAt: z.coerce.date(),
   version: z.number().int().positive(),
   createdAt: z.coerce.date(),

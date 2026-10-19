@@ -2,6 +2,7 @@ import type { JSX } from "react";
 import { Link } from "react-router-dom";
 import type { AlbumWithStats, Review } from "@project/shared";
 import { RatingStars } from "./RatingStars";
+import { formatTag } from "../format";
 
 const focusRing =
   "outline-none rounded focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-surface";
@@ -57,6 +58,9 @@ interface ReviewRowProps {
   isDeleting?: boolean;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  // "log" is the compact diary entry used on profiles: date block, small
+  // cover, one line of meta. "card" is the roomier default.
+  variant?: "card" | "log";
 }
 
 export function ReviewRow({
@@ -67,7 +71,104 @@ export function ReviewRow({
   isDeleting,
   isFavorite,
   onToggleFavorite,
+  variant = "card",
 }: ReviewRowProps): JSX.Element {
+  if (variant === "log") {
+    const created = new Date(review.listenedAt);
+    const month = created.toLocaleDateString("es", { month: "short" }).replace(".", "").toUpperCase();
+    const day = String(created.getDate()).padStart(2, "0");
+    return (
+      <li className="flex items-start gap-3 rounded-lg bg-bg-surface p-3">
+        <div
+          className="flex w-11 shrink-0 flex-col items-center justify-center self-start rounded bg-bg-hover py-1"
+          aria-label={created.toLocaleDateString("es", { month: "long", day: "numeric", year: "numeric" })}
+        >
+          <span className="text-[10px] font-bold uppercase leading-[22px] text-text-secondary">{month}</span>
+          <span className="pt-0.5 text-section-title-lg leading-[18px] text-text-primary">{day}</span>
+        </div>
+        <Link
+          to={`/albums/${album.id}`}
+          aria-label={`Ver ${album.title}`}
+          className={`relative size-16 shrink-0 overflow-hidden rounded bg-bg-hover shadow-md ${focusRing}`}
+        >
+          {album.coverUrl ? (
+            <img src={album.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center px-1 text-center text-label text-text-muted">
+              Sin portada
+            </div>
+          )}
+        </Link>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex items-start justify-between gap-1">
+            <Link
+              to={`/albums/${album.id}`}
+              className={`truncate pt-px text-[15px] leading-[19px] text-text-primary ${focusRing}`}
+            >
+              {album.title}
+            </Link>
+            {(onToggleFavorite || onEdit || onDelete) && (
+              <div className="-mr-2 -mt-2 flex shrink-0 items-center">
+                {onToggleFavorite && (
+                  <button
+                    type="button"
+                    onClick={onToggleFavorite}
+                    aria-pressed={Boolean(isFavorite)}
+                    aria-label={isFavorite ? `Quitar ${album.title} de favoritos` : `Agregar ${album.title} a favoritos`}
+                    className={`flex size-11 items-center justify-center ${focusRing} ${
+                      isFavorite ? "text-danger" : "text-text-secondary hover:text-text-primary"
+                    }`}
+                  >
+                    <HeartIcon filled={Boolean(isFavorite)} />
+                  </button>
+                )}
+                {onEdit && (
+                  <button
+                    type="button"
+                    onClick={onEdit}
+                    aria-label={`Editar tu reseña de ${album.title}`}
+                    className={`flex size-11 items-center justify-center text-text-secondary hover:text-text-primary ${focusRing}`}
+                  >
+                    <PencilIcon />
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={onDelete}
+                    disabled={isDeleting}
+                    aria-label={`Eliminar tu reseña de ${album.title}`}
+                    className={`flex size-11 items-center justify-center text-text-secondary hover:text-danger disabled:opacity-50 ${focusRing}`}
+                  >
+                    <TrashIcon />
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+          <p className="truncate text-secondary text-text-secondary">
+            {album.artist.name} • {album.year}
+          </p>
+          <div className="flex flex-wrap items-center gap-2 pt-1.5">
+            <RatingStars value={review.rating} readOnly label="Calificación" />
+            <span className="text-secondary font-bold text-accent">{review.rating.toFixed(1)}</span>
+            {formatTag(review) && (
+              <span className="rounded-sm bg-bg-hover px-2 py-0.5 text-[10px] uppercase tracking-[0.25px] text-accent">
+                {formatTag(review)}
+              </span>
+            )}
+            {review.isRelisten && (
+              <span className="rounded-sm bg-bg-hover px-2 py-0.5 text-[10px] uppercase tracking-[0.25px] text-text-secondary">
+                Reescucha
+              </span>
+            )}
+          </div>
+          {review.text && <p className="line-clamp-2 pt-1.5 text-secondary text-text-secondary">{review.text}</p>}
+        </div>
+      </li>
+    );
+  }
+
   return (
     <li className="flex gap-4 rounded-lg border border-border bg-bg-surface p-4">
       <Link

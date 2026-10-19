@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { Review } from "@project/shared";
+import type { ListeningFormat, Review } from "@project/shared";
 import { MysqlService } from "@/shared/db/mysql.service";
 import { ReviewRepository } from "@/modules/review/domain/review.repository";
 
@@ -10,13 +10,15 @@ interface ReviewRow {
   rating: number;
   text: string | null;
   is_relisten: number;
+  format: ListeningFormat | null;
+  format_detail: string | null;
   listened_at: Date;
   version: number;
   created_at: Date;
   updated_at: Date;
 }
 
-const COLUMNS = "id, user_id, album_id, rating, `text`, is_relisten, listened_at, version, created_at, updated_at";
+const COLUMNS = "id, user_id, album_id, rating, `text`, is_relisten, format, format_detail, listened_at, version, created_at, updated_at";
 
 function toReview(row: ReviewRow): Review {
   return {
@@ -26,6 +28,8 @@ function toReview(row: ReviewRow): Review {
     rating: row.rating,
     text: row.text,
     isRelisten: Boolean(row.is_relisten),
+    format: row.format,
+    formatDetail: row.format_detail,
     listenedAt: row.listened_at,
     version: row.version,
     createdAt: row.created_at,
@@ -67,11 +71,13 @@ export class MysqlReviewRepository extends ReviewRepository {
 
   async save(review: Review): Promise<void> {
     await this.db.execute(
-      `INSERT INTO reviews (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO reviews (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
          rating = VALUES(rating),
          \`text\` = VALUES(\`text\`),
          is_relisten = VALUES(is_relisten),
+         format = VALUES(format),
+         format_detail = VALUES(format_detail),
          listened_at = VALUES(listened_at),
          version = VALUES(version),
          updated_at = VALUES(updated_at)`,
@@ -82,6 +88,8 @@ export class MysqlReviewRepository extends ReviewRepository {
         review.rating,
         review.text,
         review.isRelisten,
+        review.format,
+        review.formatDetail,
         review.listenedAt,
         review.version,
         review.createdAt,

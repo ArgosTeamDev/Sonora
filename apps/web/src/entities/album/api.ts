@@ -7,8 +7,8 @@ export interface AlbumListFilters {
   year?: number;
   artistId?: string;
   sort?: "rating" | "year" | "title";
-  // A non-empty q searches live across all of iTunes instead of just the
-  // curated catalog (see AlbumRepository.search on the backend).
+  // A non-empty q searches live across Deezer (MusicBrainz as fallback)
+  // instead of just the curated catalog (see AlbumRepository.search on the backend).
   q?: string;
 }
 
@@ -37,10 +37,11 @@ export function fetchAlbum(id: string): Promise<AlbumWithStats> {
   return http.get<AlbumWithStats>(`/albums/${id}`);
 }
 
-export function useAlbums(filters: AlbumListFilters) {
+export function useAlbums(filters: AlbumListFilters, enabled = true) {
   return useQuery({
     queryKey: albumKeys.list(filters),
     queryFn: () => fetchAlbums(filters),
+    enabled,
   });
 }
 

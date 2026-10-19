@@ -1,4 +1,4 @@
-import type { JSX } from "react";
+import type { JSX, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import type { AlbumWithStats } from "@project/shared";
 import { RatingStars } from "@/entities/review/ui/RatingStars";
@@ -9,68 +9,134 @@ const focusRing =
 
 interface AlbumOfTheMonthProps {
   album: AlbumWithStats;
+  // "Álbum del mes" only when it's truly the flagged pick; callers featuring
+  // a stand-in pass something honest like "Destacado".
+  label?: string;
+  // Extra action next to the primary one (e.g. "add to list"); the entity
+  // can't depend on features, so the caller supplies it.
+  secondaryAction?: ReactNode;
 }
 
 // The spotlight reads from real fields on the album record (isAlbumOfTheMonth,
 // editorialNote — see packages/shared/src/album.ts), not a hardcoded pick, so
 // swapping which album is featured is a data change, not a code change.
-export function AlbumOfTheMonth({ album }: AlbumOfTheMonthProps): JSX.Element {
+export function AlbumOfTheMonth({
+  album,
+  label = "Álbum del mes",
+  secondaryAction,
+}: AlbumOfTheMonthProps): JSX.Element {
+  const href = `/albums/${album.id}`;
+  const rating = album.averageRating;
+
   return (
     <section
-      aria-label="Álbum del mes"
-      className="flex flex-col gap-5 rounded-lg border border-border bg-bg-surface p-4 sm:flex-row sm:p-6"
+      aria-label={label}
+      className="relative overflow-hidden rounded-lg bg-bg-surface p-4 lg:p-8"
     >
-      <Link
-        to={`/albums/${album.id}`}
-        aria-label={`Ver ${album.title}`}
-        className={`relative mx-auto h-48 w-48 shrink-0 overflow-hidden rounded border border-border/60 bg-bg-hover shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_12px_28px_-12px_rgba(0,0,0,0.7)] sm:mx-0 sm:h-56 sm:w-56 ${focusRing}`}
-      >
-        {album.coverUrl ? (
-          <img src={album.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center px-2 text-center text-label text-text-muted">
-            Sin portada
-          </div>
-        )}
-      </Link>
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute -right-16 -top-24 size-80 rounded-full bg-accent-cta/25 blur-3xl"
+      />
 
-      <div className="flex min-w-0 flex-1 flex-col gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-accent-strong px-2.5 py-0.5 text-label uppercase text-text-primary">
-            Álbum del mes
-          </span>
-          <span className="text-label text-text-muted">{album.year}</span>
-          {album.genres.map((genre) => (
-            <span key={genre} className="text-label uppercase text-text-muted">
-              {genre}
-            </span>
-          ))}
-        </div>
-
-        <h2 className="text-page-title text-text-primary">{album.title}</h2>
-        <Link to={`/artists/${album.artist.slug}`} className={`w-fit text-secondary text-accent ${focusRing}`}>
-          {album.artist.name}
-        </Link>
-
-        {album.editorialNote && <p className="text-body italic text-text-secondary">{album.editorialNote}</p>}
-
-        <div className="flex flex-wrap items-center gap-2 pt-1">
-          {album.averageRating !== null ? (
-            <>
-              <RatingStars value={album.averageRating} readOnly label="Promedio" />
-              <span className="text-secondary text-text-muted">
-                {album.averageRating.toFixed(1)} · {album.totalReviews} reseña
-                {album.totalReviews === 1 ? "" : "s"}
+      <div className="relative flex flex-col gap-4 lg:flex-row lg:gap-8">
+        {/* Phone: label and rating share the top row. */}
+        <div className="flex items-center justify-between gap-2 lg:hidden">
+          <span className="rounded-xl bg-accent/90 px-2.5 py-0.5 text-label uppercase text-on-accent">{label}</span>
+          {rating !== null && (
+            <span className="flex items-center gap-1 rounded-xl bg-bg-hover/90 px-2.5 py-1 text-secondary font-semibold text-text-primary">
+              <span className="text-accent" aria-hidden="true">
+                ★
               </span>
-            </>
-          ) : (
-            <span className="text-secondary text-text-muted">Nadie lo calificó todavía.</span>
+              {rating.toFixed(1)} <span className="text-text-muted">/ 5.0</span>
+            </span>
           )}
         </div>
 
-        <Link to={`/albums/${album.id}`} className={buttonClasses("primary", "mt-1 w-fit")}>
-          Registrar
-        </Link>
+        <div className="flex gap-4 lg:contents">
+          <Link
+            to={href}
+            aria-label={`Ver ${album.title}`}
+            className={`relative size-28 shrink-0 overflow-hidden rounded bg-bg-hover shadow-2xl lg:size-64 ${focusRing}`}
+          >
+            {album.coverUrl ? (
+              <img src={album.coverUrl} alt="" className="absolute inset-0 h-full w-full object-cover" />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center px-2 text-center text-label text-text-muted">
+                Sin portada
+              </div>
+            )}
+          </Link>
+
+          <div className="flex min-w-0 flex-1 flex-col justify-center gap-1.5 lg:justify-start lg:gap-3">
+            {/* Desktop: label, year and genres sit above the title. */}
+            <div className="hidden flex-wrap items-center gap-2 lg:flex">
+              <span className="rounded-xl bg-bg-hover px-2.5 py-0.5 text-label uppercase text-text-secondary">
+                {label}
+              </span>
+              <span className="rounded-xl bg-accent-cta/40 px-2.5 py-0.5 text-label text-accent">{album.year}</span>
+              {album.genres.map((genre) => (
+                <span key={genre} className="text-label uppercase text-text-muted">
+                  {genre}
+                </span>
+              ))}
+            </div>
+
+            <h2 className="text-[26px] font-extrabold leading-8 tracking-[-0.65px] text-text-primary lg:text-page-title-lg">
+              <Link to={href} className={focusRing}>
+                {album.title}
+              </Link>
+            </h2>
+            <p className="text-secondary text-text-secondary lg:text-[24px] lg:leading-8">
+              <Link to={`/artists/${album.artist.slug}`} className={`lg:text-accent ${focusRing}`}>
+                {album.artist.name}
+              </Link>
+              <span className="lg:hidden"> • {album.year}</span>
+            </p>
+
+            {album.editorialNote && (
+              <blockquote className="line-clamp-3 text-secondary italic text-text-secondary lg:mt-1 lg:border-l-2 lg:border-border lg:pl-4 lg:text-[18px] lg:leading-7">
+                “{album.editorialNote}”
+              </blockquote>
+            )}
+
+            {/* Desktop rating block. */}
+            <div className="hidden items-center gap-4 pt-1 lg:flex">
+              {rating !== null ? (
+                <>
+                  <span className="flex items-center gap-2 rounded bg-bg-hover px-3 py-2">
+                    <RatingStars value={rating} readOnly label="Promedio" />
+                    <span className="text-2xl font-bold text-text-primary">{rating.toFixed(1)}</span>
+                    <span className="text-secondary text-text-muted">/ 5.0</span>
+                  </span>
+                  <span className="text-secondary text-text-secondary">
+                    <span className="font-semibold text-text-primary">{album.totalReviews}</span> registro
+                    {album.totalReviews === 1 ? "" : "s"} en total
+                  </span>
+                </>
+              ) : (
+                <span className="text-secondary text-text-muted">Nadie lo calificó todavía.</span>
+              )}
+            </div>
+
+            <div className="hidden items-center gap-3 pt-3 lg:flex">
+              <Link to={href} className={buttonClasses("primary", "bg-accent-strong text-on-accent px-5")}>
+                Guardar en diario
+              </Link>
+              {secondaryAction}
+            </div>
+          </div>
+        </div>
+
+        {/* Phone actions: full-width primary + the secondary icon. */}
+        <div className="flex items-center gap-2 lg:hidden">
+          <Link
+            to={href}
+            className={buttonClasses("primary", "flex-1 bg-accent text-on-accent hover:bg-accent hover:brightness-110")}
+          >
+            Guardar en diario
+          </Link>
+          {secondaryAction}
+        </div>
       </div>
     </section>
   );
