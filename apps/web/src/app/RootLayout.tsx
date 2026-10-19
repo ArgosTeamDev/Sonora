@@ -4,6 +4,7 @@ import { BottomNav } from "@/shared/ui/BottomNav";
 import { TopNav } from "@/shared/ui/TopNav";
 import { SkipLink } from "@/shared/ui/SkipLink";
 import { Footer } from "@/shared/ui/Footer";
+import { AccountMenu } from "@/features/auth/AccountMenu";
 import { PlayerProvider } from "@/shared/player/PlayerContext";
 import { NowPlayingBar } from "@/shared/player/NowPlayingBar";
 
@@ -12,7 +13,7 @@ export function RootLayout(): JSX.Element {
     <PlayerProvider>
       <div className="min-h-dvh bg-bg-base text-text-primary">
         <SkipLink />
-        <TopNav />
+        <TopNav accountMenu={(user) => <AccountMenu user={user} />} />
         <main id="main-content">
           {/* Every page's content shares this max-width with TopNav's inner
               container, so headings/cards/buttons line up under the logo and

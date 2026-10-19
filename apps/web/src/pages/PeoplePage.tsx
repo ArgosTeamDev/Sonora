@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import type { JSX } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { useSearchUsers } from "@/entities/user/api";
+import { useSearchParams } from "react-router-dom";
+import { useCurrentUser } from "@/entities/auth/api";
+import { useFollowers, useFollowing, useSearchUsers, useUsers } from "@/entities/user/api";
+import { PersonRow } from "@/features/follow-user/PersonRow";
 
 const focusRing =
   "outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base";
 
-function initials(username: string): string {
-  return username.slice(0, 2).toUpperCase();
-}
+const SUGGESTIONS_SHOWN = 8;
 
 export function PeoplePage(): JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -30,13 +30,29 @@ export function PeoplePage(): JSX.Element {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
+  const { data: currentUser } = useCurrentUser();
+  const { data: myFollowing } = useFollowing(currentUser?.username ?? "");
+  const { data: myFollowers } = useFollowers(currentUser?.username ?? "");
   const { data: results, isLoading, isError } = useSearchUsers(query);
+  const { data: everyone } = useUsers();
+
+  const followingIds = new Set((myFollowing ?? []).map((u) => u.id));
+  const followerIds = new Set((myFollowers ?? []).map((u) => u.id));
+
+  // With nothing typed, offer people you don't follow yet — those who already
+  // follow you first, since following back is the most likely next step.
+  const suggestions = (everyone ?? [])
+    .filter((u) => u.id !== currentUser?.id && !followingIds.has(u.id))
+    .sort((a, b) => Number(followerIds.has(b.id)) - Number(followerIds.has(a.id)))
+    .slice(0, SUGGESTIONS_SHOWN);
+
+  const isSearching = query.trim().length > 0;
 
   return (
-    <div className="flex flex-col gap-6 px-4 pt-8">
+    <div className="flex flex-col gap-6 px-4 pb-8 pt-8 lg:px-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-page-title text-text-primary md:text-page-title-lg">Buscar perfiles</h1>
-        <p className="text-body text-text-secondary">Encontrá a otros oyentes por nombre o usuario.</p>
+        <h1 className="text-page-title text-text-primary md:text-page-title-lg">Personas</h1>
+        <p className="text-body text-text-secondary">Encuentra a otros oyentes por nombre o usuario y sigue su diario.</p>
       </header>
 
       <label className="relative flex items-center">
@@ -62,42 +78,45 @@ export function PeoplePage(): JSX.Element {
         />
       </label>
 
-      {query.trim().length === 0 && (
-        <p className="text-body text-text-secondary">Escribí algo para empezar a buscar.</p>
-      )}
-      {isLoading && <p className="text-body text-text-secondary">Buscando…</p>}
-      {isError && (
+      {isSearching && isLoading && <p className="text-body text-text-secondary">Buscando…</p>}
+      {isSearching && isError && (
         <p role="alert" className="text-body text-text-secondary">
-          No se pudo buscar. Intentá de nuevo.
+          No se pudo buscar. Intenta de nuevo.
         </p>
       )}
-      {results && results.length === 0 && (
+      {isSearching && results && results.length === 0 && (
         <p className="text-body text-text-secondary">Nadie coincide con "{query}".</p>
       )}
 
-      {results && results.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {results.map((user) => (
-            <li key={user.id}>
-              <Link
-                to={`/u/${user.username}`}
-                className={`flex items-center gap-3 rounded-lg border border-border bg-bg-surface p-3 hover:bg-bg-hover ${focusRing}`}
-              >
-                <span className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-accent-strong text-label text-text-primary">
-                  {user.avatarUrl ? (
-                    <img src={user.avatarUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    initials(user.username)
-                  )}
-                </span>
-                <span className="flex min-w-0 flex-col">
-                  <span className="truncate text-secondary font-semibold text-text-primary">{user.name}</span>
-                  <span className="truncate text-label text-text-muted">@{user.username}</span>
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+      {isSearching && results && results.length > 0 && (
+        <section aria-label="Resultados" className="flex flex-col gap-3">
+          <h2 className="text-label uppercase text-text-secondary">
+            {results.length} resultado{results.length === 1 ? "" : "s"}
+          </h2>
+          <ul className="grid gap-2 lg:grid-cols-2">
+            {results.map((user) => (
+              <PersonRow key={user.id} user={user} currentUser={currentUser} followsYou={followerIds.has(user.id)} />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!isSearching && suggestions.length > 0 && (
+        <section aria-label="Sugerencias" className="flex flex-col gap-3">
+          <div className="flex flex-col">
+            <h2 className="text-section-title-lg text-text-primary">Personas que quizá conozcas</h2>
+            <p className="text-secondary text-text-secondary">Gente de Sonora que todavía no sigues.</p>
+          </div>
+          <ul className="grid gap-2 lg:grid-cols-2">
+            {suggestions.map((user) => (
+              <PersonRow key={user.id} user={user} currentUser={currentUser} followsYou={followerIds.has(user.id)} />
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {!isSearching && suggestions.length === 0 && (
+        <p className="text-body text-text-secondary">Escribe un nombre o usuario para empezar a buscar.</p>
       )}
     </div>
   );

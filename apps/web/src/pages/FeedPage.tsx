@@ -6,6 +6,7 @@ import { useFollowing, useUsers } from "@/entities/user/api";
 import { useCurrentUser } from "@/entities/auth/api";
 import { useAlbums, useAlbumsByIds } from "@/entities/album/api";
 import { useRecentLists } from "@/entities/list/api";
+import { topRatedAlbum } from "@/entities/album/top-rated";
 import { AlbumOfTheMonth } from "@/entities/album/ui/AlbumOfTheMonth";
 import { AlbumShelfItem } from "@/entities/album/ui/AlbumShelfItem";
 import { ListCard } from "@/entities/list/ui/ListCard";
@@ -94,14 +95,7 @@ export function FeedPage(): JSX.Element {
     .sort((a, b) => new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime())
     .slice(0, FEATURED_COUNT);
 
-  // The flagged album of the month, else the best-rated one as an honest stand-in.
-  const flagged = (albums ?? []).find((a) => a.isAlbumOfTheMonth) ?? null;
-  const heroAlbum =
-    flagged ??
-    [...(albums ?? [])]
-      .filter((a) => a.averageRating !== null)
-      .sort((a, b) => (b.averageRating ?? 0) - (a.averageRating ?? 0))[0] ??
-    null;
+  const heroAlbum = topRatedAlbum(albums ?? []);
 
   const communityReviews = [...(reviews ?? [])]
     .sort((a, b) =>
@@ -167,7 +161,6 @@ export function FeedPage(): JSX.Element {
         {heroAlbum && (
           <AlbumOfTheMonth
             album={heroAlbum}
-            label={flagged ? "Álbum del mes" : "Destacado"}
             secondaryAction={listButton || undefined}
           />
         )}

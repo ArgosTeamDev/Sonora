@@ -1,5 +1,6 @@
-import type { JSX } from "react";
+import type { JSX, ReactNode } from "react";
 import { NavLink } from "react-router-dom";
+import type { User } from "@project/shared";
 import { useCurrentUser } from "@/entities/auth/api";
 
 const focusRing =
@@ -27,7 +28,9 @@ function NavItem({ to, label }: { to: string; label: string }): JSX.Element {
 // — this is our own equivalent, same tokens, same 5 destinations, laid out
 // as a sticky top bar instead of a bottom bar. Hidden below the md breakpoint,
 // where BottomNav takes over.
-export function TopNav(): JSX.Element {
+// `accountMenu` is composed in by the app layer (see RootLayout): the menu
+// needs the logout feature, which a shared component shouldn't import.
+export function TopNav({ accountMenu }: { accountMenu?: (user: User) => ReactNode }): JSX.Element {
   const { data: currentUser } = useCurrentUser();
   const profileHref = currentUser ? `/u/${currentUser.username}` : "/login";
 
@@ -65,11 +68,15 @@ export function TopNav(): JSX.Element {
                 + Registrar
               </NavLink>
 
-              <NavLink to={profileHref} aria-label="Tu perfil" className={`rounded-full ${focusRing}`}>
-                <span className="flex size-9 items-center justify-center rounded-full bg-accent-strong text-label text-text-primary">
-                  {currentUser.username.slice(0, 2).toUpperCase()}
-                </span>
-              </NavLink>
+              {accountMenu ? (
+                accountMenu(currentUser)
+              ) : (
+                <NavLink to={profileHref} aria-label="Tu perfil" className={`rounded-full ${focusRing}`}>
+                  <span className="flex size-9 items-center justify-center rounded-full bg-accent-strong text-label text-text-primary">
+                    {currentUser.username.slice(0, 2).toUpperCase()}
+                  </span>
+                </NavLink>
+              )}
             </>
           ) : (
             <>

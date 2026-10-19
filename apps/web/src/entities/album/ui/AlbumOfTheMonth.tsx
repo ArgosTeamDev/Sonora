@@ -9,20 +9,18 @@ const focusRing =
 
 interface AlbumOfTheMonthProps {
   album: AlbumWithStats;
-  // "Álbum del mes" only when it's truly the flagged pick; callers featuring
-  // a stand-in pass something honest like "Destacado".
   label?: string;
   // Extra action next to the primary one (e.g. "add to list"); the entity
   // can't depend on features, so the caller supplies it.
   secondaryAction?: ReactNode;
 }
 
-// The spotlight reads from real fields on the album record (isAlbumOfTheMonth,
-// editorialNote — see packages/shared/src/album.ts), not a hardcoded pick, so
-// swapping which album is featured is a data change, not a code change.
+// The spotlight is whichever album is best rated (see topRatedAlbum), not a
+// hardcoded pick; the editorial quote still comes from the album's
+// editorialNote when it has one.
 export function AlbumOfTheMonth({
   album,
-  label = "Álbum del mes",
+  label = "Álbum del año",
   secondaryAction,
 }: AlbumOfTheMonthProps): JSX.Element {
   const href = `/albums/${album.id}`;

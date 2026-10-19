@@ -14,8 +14,8 @@ import { useFollowUser } from "@/features/follow-user/useFollowUser";
 import { useEditProfile } from "@/features/edit-profile/useEditProfile";
 import { useDeleteReview } from "@/features/delete-review/useDeleteReview";
 import { FavoriteReviewRow } from "@/features/favorite-album/FavoriteReviewRow";
-import { useLogout } from "@/features/auth/useAuthMutations";
-import { FollowListDialog } from "@/entities/user/ui/FollowListDialog";
+import { LogoutDialog } from "@/features/auth/LogoutDialog";
+import { FollowListDialog, type FollowListTab } from "@/features/follow-user/FollowListDialog";
 import { Button } from "@/shared/ui/Button";
 import { PHYSICAL_FORMATS, type ListeningFormat, type Review, type User } from "@project/shared";
 
@@ -153,9 +153,10 @@ export function ProfilePage(): JSX.Element {
   const { data: myFollowing } = useFollowing(currentUser?.username ?? "");
   const { data: followers } = useFollowers(username ?? "");
   const { data: following } = useFollowing(username ?? "");
+  const { data: myFollowers } = useFollowers(currentUser?.username ?? "");
   const { data: lists } = useLists(username ?? "");
   const [statusMessage, setStatusMessage] = useState("");
-  const [openList, setOpenList] = useState<"followers" | "following" | null>(null);
+  const [openList, setOpenList] = useState<FollowListTab | null>(null);
 
   const isOwnProfile = Boolean(currentUser && username === currentUser.username);
   const isFollowing = Boolean(user && myFollowing?.some((u) => u.id === user.id));
@@ -165,7 +166,7 @@ export function ProfilePage(): JSX.Element {
   });
   const deleteReview = useDeleteReview();
   const editProfile = useEditProfile(username ?? "");
-  const logout = useLogout();
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [draftName, setDraftName] = useState("");
@@ -264,10 +265,6 @@ export function ProfilePage(): JSX.Element {
     );
   };
 
-  const handleLogout = (): void => {
-    logout.mutate(undefined, { onSuccess: () => navigate("/") });
-  };
-
   const handleDeleteReview = (reviewId: string, albumTitle: string): void => {
     if (!window.confirm(`¿Eliminar tu reseña de ${albumTitle}?`)) return;
     deleteReview.mutate(reviewId, {
@@ -357,6 +354,11 @@ export function ProfilePage(): JSX.Element {
             )}
             <p className="flex flex-wrap items-center gap-x-2 text-secondary">
               <span className="font-medium text-accent">@{user.username}</span>
+              {!isOwnProfile && myFollowers?.some((u) => u.id === user.id) && (
+                <span className="rounded-sm bg-bg-hover px-1.5 py-0.5 text-[10px] font-bold uppercase text-text-secondary">
+                  Te sigue
+                </span>
+              )}
               {user.location && (
                 <>
                   <span className="text-text-secondary" aria-hidden="true">
@@ -445,7 +447,16 @@ export function ProfilePage(): JSX.Element {
             <>
               {user.bio && <p className="text-[14px] leading-[22px] text-text-secondary">{user.bio}</p>}
               {isOwnProfile && (
-                <Button variant="ghost" onClick={handleLogout} disabled={logout.isPending} className="self-start px-0">
+                <Button variant="secondary" onClick={() => setIsLogoutOpen(true)} className="self-start gap-2">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path
+                      d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                   Cerrar sesión
                 </Button>
               )}
@@ -474,11 +485,8 @@ export function ProfilePage(): JSX.Element {
           </button>
         </div>
 
-        {openList === "followers" && (
-          <FollowListDialog title="Seguidores" users={followers ?? []} onClose={() => setOpenList(null)} />
-        )}
-        {openList === "following" && (
-          <FollowListDialog title="Siguiendo" users={following ?? []} onClose={() => setOpenList(null)} />
+        {openList && (
+          <FollowListDialog username={user.username} initialTab={openList} onClose={() => setOpenList(null)} />
         )}
 
         {(favorites.length > 0 || isOwnProfile) && (
@@ -638,6 +646,7 @@ export function ProfilePage(): JSX.Element {
           </p>
         )}
       </div>
+      {isLogoutOpen && <LogoutDialog onClose={() => setIsLogoutOpen(false)} />}
     </article>
   );
 }
