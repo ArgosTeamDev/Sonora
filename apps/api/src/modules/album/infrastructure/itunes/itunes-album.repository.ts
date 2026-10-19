@@ -4,6 +4,7 @@ import {
   type AlbumFilters,
   type AlbumWithArtist,
 } from "@/modules/album/domain/album.repository";
+import { applyFilters } from "@/modules/album/domain/apply-filters";
 import { AlbumOverlayRepository } from "@/modules/album/domain/album-overlay.repository";
 import { ItunesClient } from "./itunes-client";
 import { toAlbumWithArtist } from "./itunes-mapper";
@@ -36,7 +37,7 @@ export class ItunesAlbumRepository extends AlbumRepository {
       toAlbumWithArtist(c, [], overlaysById.get(String(c.collectionId)) ?? null),
     );
 
-    return this.applyFilters(albums, filters);
+    return applyFilters(albums, filters);
   }
 
   async findById(id: string): Promise<AlbumWithArtist | null> {
@@ -62,7 +63,7 @@ export class ItunesAlbumRepository extends AlbumRepository {
       toAlbumWithArtist(c, [], overlaysById.get(String(c.collectionId)) ?? null),
     );
 
-    return this.applyFilters(albums, filters);
+    return applyFilters(albums, filters);
   }
 
   async findByIds(ids: string[]): Promise<AlbumWithArtist[]> {
@@ -78,19 +79,5 @@ export class ItunesAlbumRepository extends AlbumRepository {
     return collections.map((c) =>
       toAlbumWithArtist(c, [], overlaysById.get(String(c.collectionId)) ?? null),
     );
-  }
-
-  private applyFilters(albums: AlbumWithArtist[], filters: AlbumFilters): AlbumWithArtist[] {
-    let result = albums;
-    if (filters.genre) {
-      result = result.filter((a) => a.genres.includes(filters.genre as string));
-    }
-    if (filters.year !== undefined) {
-      result = result.filter((a) => a.year === filters.year);
-    }
-    if (filters.artistId) {
-      result = result.filter((a) => a.artist.id === filters.artistId);
-    }
-    return result;
   }
 }
