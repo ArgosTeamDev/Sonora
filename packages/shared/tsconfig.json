@@ -1,6 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    // CommonJS so Node can require() the built package without file extensions
+    // in the relative imports. The web app doesn't use this build: Vite and
+    // tsc resolve @project/shared straight to ./src.
+    "module": "commonjs",
+    "moduleResolution": "node10",
     "outDir": "dist",
     "rootDir": "src"
   },

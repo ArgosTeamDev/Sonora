@@ -24,7 +24,7 @@ jobs:
             cd ${{ secrets.API_PATH }}
             git pull origin main
             pnpm install
-            pnpm --filter shared build
+            pnpm --filter @project/shared build
             pnpm --filter api build
             pnpm --filter api migrate up
             pm2 restart api
