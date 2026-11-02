@@ -1,5 +1,14 @@
-import { Body, Controller, ForbiddenException, Get, Param, Patch, Query, Req, UseGuards } from "@nestjs/common";
-import { UpdateUserDtoSchema, type Favorite, type Review, type UpdateUserDto, type User } from "@project/shared";
+import { Body, Controller, ForbiddenException, Get, Param, Patch, Put, Query, Req, UseGuards } from "@nestjs/common";
+import {
+  ProfileTopDtoSchema,
+  UpdateUserDtoSchema,
+  type Favorite,
+  type ProfileTopDto,
+  type Review,
+  type UpdateUserDto,
+  type User,
+  type WatchlistItem,
+} from "@project/shared";
 import { ZodValidationPipe } from "@/shared/http/zod-validation.pipe";
 import { AuthGuard, type AuthenticatedRequest } from "@/shared/auth/auth.guard";
 import { UserService } from "./user.service";
@@ -36,6 +45,29 @@ export class UserController {
   @Get(":username/favorites")
   getFavorites(@Param("username") username: string): Promise<Favorite[]> {
     return this.users.getFavorites(username);
+  }
+
+  @Get(":username/watchlist")
+  getWatchlist(@Param("username") username: string): Promise<WatchlistItem[]> {
+    return this.users.getWatchlist(username);
+  }
+
+  @Get(":username/top")
+  getTop(@Param("username") username: string): Promise<string[]> {
+    return this.users.getTop(username);
+  }
+
+  @Put(":username/top")
+  @UseGuards(AuthGuard)
+  setTop(
+    @Param("username") username: string,
+    @Body(new ZodValidationPipe(ProfileTopDtoSchema)) dto: ProfileTopDto,
+    @Req() req: AuthenticatedRequest,
+  ): Promise<string[]> {
+    if (req.authUser?.username !== username) {
+      throw new ForbiddenException({ code: "FORBIDDEN", message: "Solo podés editar tu propio perfil." });
+    }
+    return this.users.setTop(username, dto);
   }
 
   @Patch(":username")

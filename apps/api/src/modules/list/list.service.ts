@@ -54,6 +54,19 @@ export class ListService {
     return this.withItems(rows);
   }
 
+  // Newest non-empty lists made by the people `userId` follows.
+  async findByFollowedBy(userId: string, limit: number): Promise<List[]> {
+    const rows = await this.db.select<ListRow>(
+      `SELECT l.id, l.user_id, l.name, l.description, l.created_at
+       FROM lists l
+       WHERE l.user_id IN (SELECT following_id FROM follows WHERE follower_id = ?)
+         AND EXISTS (SELECT 1 FROM list_items i WHERE i.list_id = l.id)
+       ORDER BY l.created_at DESC LIMIT ?`,
+      [userId, limit],
+    );
+    return this.withItems(rows);
+  }
+
   async create(userId: string, dto: CreateListDto): Promise<List> {
     const id = randomUUID();
     await this.db.execute(

@@ -7,6 +7,8 @@ export type ListeningFormat = z.infer<typeof ListeningFormatSchema>;
 // What counts as "Colección Física" on a profile.
 export const PHYSICAL_FORMATS: readonly ListeningFormat[] = ["vinyl", "cassette", "cd"];
 
+export const MAX_REVIEW_TAGS = 5;
+
 const isHalfStarStep = (value: number) => Number.isInteger(value * 2);
 
 export const ReviewSchema = z.object({
@@ -24,6 +26,8 @@ export const ReviewSchema = z.object({
   format: ListeningFormatSchema.nullable().default(null),
   // Free-form qualifier for the format ("180G", "45 RPM", "96KHZ", "CHROME").
   formatDetail: z.string().max(32).nullable().default(null),
+  // Free-form diary labels ("road trip", "reescucha de domingo"), lowercase.
+  tags: z.array(z.string().trim().toLowerCase().min(1).max(24)).max(MAX_REVIEW_TAGS).default([]),
   listenedAt: z.coerce.date(),
   version: z.number().int().positive(),
   createdAt: z.coerce.date(),

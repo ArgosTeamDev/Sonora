@@ -24,12 +24,19 @@ export interface MbReleaseGroup {
   "primary-type"?: string;
   "artist-credit"?: Array<{ name: string; artist: { id: string; name: string } }>;
   tags?: Array<{ name: string; count: number }>;
+  "secondary-types"?: string[];
   releases?: MbRelease[];
 }
 
 export interface MbTrack {
   title: string;
   length?: number | null; // ms
+}
+
+export interface MbArtist {
+  id: string;
+  name: string;
+  score?: number;
 }
 
 interface MbSearchResponse {
@@ -58,6 +65,19 @@ export class MusicBrainzClient {
     const url = `${MB_BASE}/release-group/?query=${encodeURIComponent(term)}&fmt=json&limit=${limit}`;
     const data = await this.http.json<MbSearchResponse>(url);
     return (data["release-groups"] ?? []).filter((g) => (g.score ?? 100) >= MIN_SCORE);
+  }
+
+  async searchArtists(name: string, limit = 5): Promise<MbArtist[]> {
+    const query = encodeURIComponent(`artist:"${name.replace(/"/g, "")}"`);
+    const data = await this.http.json<{ artists?: MbArtist[] }>(`${MB_BASE}/artist/?query=${query}&fmt=json&limit=${limit}`);
+    return (data.artists ?? []).filter((a) => (a.score ?? 100) >= MIN_SCORE);
+  }
+
+  // Studio releases only (no live/compilation/remix), straight from the browse API.
+  async artistReleaseGroups(artistId: string): Promise<MbReleaseGroup[]> {
+    const url = `${MB_BASE}/release-group?artist=${encodeURIComponent(artistId)}&type=album|ep&fmt=json&limit=100`;
+    const data = await this.http.json<MbSearchResponse>(url);
+    return (data["release-groups"] ?? []).filter((g) => (g["secondary-types"] ?? []).length === 0);
   }
 
   async releaseGroup(id: string): Promise<MbReleaseGroup | null> {

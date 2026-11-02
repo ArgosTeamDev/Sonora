@@ -38,3 +38,10 @@ export const AlbumWithStatsSchema = AlbumSchema.extend({
   myReview: MyReviewSummarySchema.nullable(),
 });
 export type AlbumWithStats = z.infer<typeof AlbumWithStatsSchema>;
+
+// An artist's page: who they are plus every album we could find for them.
+export const ArtistDiscographySchema = z.object({
+  artist: ArtistSchema,
+  albums: z.array(AlbumWithStatsSchema),
+});
+export type ArtistDiscography = z.infer<typeof ArtistDiscographySchema>;

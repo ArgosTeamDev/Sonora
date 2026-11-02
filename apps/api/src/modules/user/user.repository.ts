@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import type { Favorite, User } from "@project/shared";
+import type { Favorite, User, WatchlistItem } from "@project/shared";
 import { MysqlService } from "@/shared/db/mysql.service";
 
 interface UserRow {
@@ -172,5 +172,33 @@ export class UserRepository {
       [userId],
     );
     return rows.map((r) => ({ userId: r.user_id, albumId: r.album_id, createdAt: r.created_at }));
+  }
+
+  async findWatchlist(userId: string): Promise<WatchlistItem[]> {
+    const rows = await this.db.select<{ user_id: string; album_id: string; created_at: Date }>(
+      `SELECT user_id, album_id, created_at FROM watchlist WHERE user_id = ? ORDER BY created_at DESC`,
+      [userId],
+    );
+    return rows.map((r) => ({ userId: r.user_id, albumId: r.album_id, createdAt: r.created_at }));
+  }
+
+  async findTop(userId: string): Promise<string[]> {
+    const rows = await this.db.select<{ album_id: string }>(
+      `SELECT album_id FROM profile_top WHERE user_id = ? ORDER BY position`,
+      [userId],
+    );
+    return rows.map((r) => r.album_id);
+  }
+
+  // Replaces the whole top in one transaction, so a failed save never leaves
+  // a half-written list.
+  async setTop(userId: string, albumIds: string[]): Promise<void> {
+    await this.db.transaction(async (conn) => {
+      await conn.query(`DELETE FROM profile_top WHERE user_id = ?`, [userId]);
+      if (albumIds.length === 0) return;
+      await conn.query(`INSERT INTO profile_top (user_id, position, album_id) VALUES ?`, [
+        albumIds.map((albumId, index) => [userId, index + 1, albumId]),
+      ]);
+    });
   }
 }

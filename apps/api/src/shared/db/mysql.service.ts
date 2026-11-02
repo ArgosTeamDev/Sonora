@@ -1,5 +1,5 @@
 import { Injectable, type OnModuleDestroy } from "@nestjs/common";
-import { createPool, type ResultSetHeader } from "mysql2/promise";
+import { createPool, type PoolConnection, type ResultSetHeader } from "mysql2/promise";
 
 const DEFAULT_URL = "mysql://sonora:sonora@localhost:3307/sonora";
 
@@ -28,5 +28,22 @@ export class MysqlService implements OnModuleDestroy {
   async execute(sql: string, params: unknown[] = []): Promise<ResultSetHeader> {
     const [result] = await this.pool.query(sql, params);
     return result as ResultSetHeader;
+  }
+
+  // Runs `work` on one connection inside a transaction: commits when it
+  // resolves, rolls back when it throws.
+  async transaction<T>(work: (conn: PoolConnection) => Promise<T>): Promise<T> {
+    const conn = await this.pool.getConnection();
+    try {
+      await conn.beginTransaction();
+      const result = await work(conn);
+      await conn.commit();
+      return result;
+    } catch (err) {
+      await conn.rollback();
+      throw err;
+    } finally {
+      conn.release();
+    }
   }
 }

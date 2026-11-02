@@ -10,6 +10,9 @@ import { FORMAT_LABELS } from "@/entities/review/format";
 import { useLists } from "@/entities/list/api";
 import { ReviewRow } from "@/entities/review/ui/ReviewRow";
 import { useFavorites } from "@/entities/favorite/api";
+import { useWatchlist } from "@/entities/watchlist/api";
+import { DiaryView } from "@/features/diary/DiaryView";
+import { ProfileTopSection } from "@/features/profile-top/ProfileTopSection";
 import { useFollowUser } from "@/features/follow-user/useFollowUser";
 import { useEditProfile } from "@/features/edit-profile/useEditProfile";
 import { useDeleteReview } from "@/features/delete-review/useDeleteReview";
@@ -146,8 +149,13 @@ export function ProfilePage(): JSX.Element {
   // A review or a favorite can point at any album found via search, not
   // just a curated one — resolve exactly the ids these need instead of
   // relying on the browsable catalog.
+  const { data: watchlistEntries } = useWatchlist(username ?? "");
   const { data: albums } = useAlbumsByIds([
-    ...new Set([...reviews.map((r) => r.albumId), ...(favoriteEntries ?? []).map((f) => f.albumId)]),
+    ...new Set([
+      ...reviews.map((r) => r.albumId),
+      ...(favoriteEntries ?? []).map((f) => f.albumId),
+      ...(watchlistEntries ?? []).map((w) => w.albumId),
+    ]),
   ]);
   const { data: currentUser } = useCurrentUser();
   const { data: myFollowing } = useFollowing(currentUser?.username ?? "");
@@ -196,12 +204,11 @@ export function ProfilePage(): JSX.Element {
     (a, b) => new Date(b.listenedAt).getTime() - new Date(a.listenedAt).getTime(),
   );
   const currentYear = new Date().getFullYear();
-  const tabReviews: Record<Exclude<ProfileTab, "stats">, Review[]> = {
-    diary: reviewsByRecency.filter((r) => new Date(r.listenedAt).getFullYear() === currentYear),
+  const tabReviews: Record<Exclude<ProfileTab, "stats" | "diary">, Review[]> = {
     reviews: reviewsByRecency.filter((r) => r.text),
     collection: reviewsByRecency.filter((r) => r.format && PHYSICAL_FORMATS.includes(r.format)),
   };
-  const visibleReviews = tab === "stats" ? [] : tabReviews[tab];
+  const visibleReviews = tab === "stats" || tab === "diary" ? [] : tabReviews[tab];
   const latestReviewDate = visibleReviews[0] ? new Date(visibleReviews[0].listenedAt) : null;
   const habits = listeningHabits(reviews);
   const loggedThisMonth = reviews.filter((r) => {
@@ -217,6 +224,13 @@ export function ProfilePage(): JSX.Element {
     .map((f) => albumsById.get(f.albumId))
     .filter((album): album is NonNullable<typeof album> => Boolean(album));
   const favoriteAlbumIds = new Set((favoriteEntries ?? []).map((f) => f.albumId));
+  const watchlist = (watchlistEntries ?? [])
+    .map((w) => albumsById.get(w.albumId))
+    .filter((album): album is NonNullable<typeof album> => Boolean(album));
+  // What the Top 4 picker offers: the albums already on this profile.
+  const topCandidates = [...new Set([...reviews.map((r) => r.albumId), ...favoriteAlbumIds])]
+    .map((id) => albumsById.get(id))
+    .filter((album): album is NonNullable<typeof album> => Boolean(album));
 
   const totalReviews = reviews.length;
   const averageRating = totalReviews === 0 ? null : reviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
@@ -489,6 +503,25 @@ export function ProfilePage(): JSX.Element {
           <FollowListDialog username={user.username} initialTab={openList} onClose={() => setOpenList(null)} />
         )}
 
+        <ProfileTopSection username={user.username} isOwnProfile={isOwnProfile} candidates={topCandidates} />
+
+        {(watchlist.length > 0 || isOwnProfile) && (
+          <section aria-label="Para escuchar" className="flex flex-col gap-3">
+            <h2 className="text-section-title-lg text-text-primary">Para escuchar</h2>
+            {watchlist.length > 0 ? (
+              <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                {watchlist.map((album) => (
+                  <AlbumShelfItem key={album.id} album={album} />
+                ))}
+              </div>
+            ) : (
+              <p className="text-body text-text-secondary">
+                Todavía no guardaste álbumes — tocá el marcador en cualquier álbum.
+              </p>
+            )}
+          </section>
+        )}
+
         {(favorites.length > 0 || isOwnProfile) && (
           <section aria-label="Favoritos" className="flex flex-col gap-3">
             <h2 className="flex items-center gap-1.5 text-section-title-lg text-text-primary">
@@ -541,7 +574,7 @@ export function ProfilePage(): JSX.Element {
         <div role="group" aria-label="Secciones del perfil" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {(
             [
-              ["diary", `Diario (${currentYear})`],
+              ["diary", "Diario"],
               ["reviews", "Reseñas"],
               ["collection", "Colección Física"],
               ["stats", "Estadísticas"],
@@ -591,6 +624,12 @@ export function ProfilePage(): JSX.Element {
           ) : (
             <p className="text-body text-text-secondary">Todavía no hay calificaciones para mostrar.</p>
           )
+        ) : tab === "diary" ? (
+          reviewsLoading ? (
+            <p className="text-body text-text-secondary">Cargando diario…</p>
+          ) : (
+            <DiaryView reviews={reviews} albumsById={albumsById} />
+          )
         ) : (
           <section aria-label="Bitácora reciente" className="flex flex-col gap-3">
             <div className="flex items-center justify-between gap-2">
@@ -608,7 +647,7 @@ export function ProfilePage(): JSX.Element {
                   ? "Todavía no hay discos físicos (vinilo, cassette o CD) en la colección."
                   : tab === "reviews"
                     ? "Todavía no hay reseñas escritas."
-                    : `Todavía no hay entradas en ${currentYear}.`}
+                    : "Todavía no hay entradas."}
               </p>
             )}
             {visibleReviews.length > 0 && (

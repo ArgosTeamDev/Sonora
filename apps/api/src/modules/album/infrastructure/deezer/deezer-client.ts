@@ -34,6 +34,17 @@ export interface DeezerAlbum extends DeezerSearchAlbum {
   tracks?: { data: DeezerTrack[] };
 }
 
+// /artist/{id}/albums: same shape as a search hit plus the release date, but
+// no genres or tracks, and no artist (it is implied by the request).
+export interface DeezerArtistAlbum {
+  id: number;
+  title: string;
+  cover_big?: string;
+  record_type?: string;
+  release_date?: string;
+  explicit_lyrics?: boolean;
+}
+
 interface DeezerError {
   error: { type: string; message: string; code: number };
 }
@@ -54,6 +65,34 @@ export class DeezerClient {
       `${DEEZER_BASE}/search/album?q=${encodeURIComponent(term)}&limit=${limit}`,
     );
     if (isError(data)) throw new Error(`Deezer search failed: ${data.error.message}`);
+    return data.data ?? [];
+  }
+
+  async searchArtists(term: string, limit = 5): Promise<DeezerArtist[]> {
+    const data = await this.http.json<{ data?: DeezerArtist[] } | DeezerError>(
+      `${DEEZER_BASE}/search/artist?q=${encodeURIComponent(term)}&limit=${limit}`,
+    );
+    if (isError(data)) throw new Error(`Deezer artist search failed: ${data.error.message}`);
+    return data.data ?? [];
+  }
+
+  async artist(id: string): Promise<DeezerArtist | null> {
+    const data = await this.http.json<DeezerArtist | DeezerError>(`${DEEZER_BASE}/artist/${encodeURIComponent(id)}`);
+    if (isError(data)) {
+      if (data.error.code === NO_DATA) return null;
+      throw new Error(`Deezer artist ${id} failed: ${data.error.message}`);
+    }
+    return data;
+  }
+
+  async artistAlbums(id: string, limit = 100): Promise<DeezerArtistAlbum[]> {
+    const data = await this.http.json<{ data?: DeezerArtistAlbum[] } | DeezerError>(
+      `${DEEZER_BASE}/artist/${encodeURIComponent(id)}/albums?limit=${limit}`,
+    );
+    if (isError(data)) {
+      if (data.error.code === NO_DATA) return [];
+      throw new Error(`Deezer discography ${id} failed: ${data.error.message}`);
+    }
     return data.data ?? [];
   }
 

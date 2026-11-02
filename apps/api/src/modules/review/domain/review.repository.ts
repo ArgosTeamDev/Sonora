@@ -4,6 +4,8 @@ export abstract class ReviewRepository {
   abstract findAll(): Promise<Review[]>;
   abstract findById(id: string): Promise<Review | null>;
   abstract findByUser(userId: string): Promise<Review[]>;
+  // Newest reviews by the people `userId` follows.
+  abstract findByFollowedBy(userId: string, limit: number): Promise<Review[]>;
   abstract findByUserAndAlbum(userId: string, albumId: string): Promise<Review | null>;
   abstract save(review: Review): Promise<void>;
   abstract remove(id: string): Promise<void>;

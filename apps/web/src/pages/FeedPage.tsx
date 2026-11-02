@@ -5,6 +5,7 @@ import { useReviews } from "@/entities/review/api";
 import { useFollowing, useUsers } from "@/entities/user/api";
 import { useCurrentUser } from "@/entities/auth/api";
 import { useAlbums, useAlbumsByIds } from "@/entities/album/api";
+import { useFeed } from "@/entities/feed/api";
 import { useRecentLists } from "@/entities/list/api";
 import { topRatedAlbum } from "@/entities/album/top-rated";
 import { AlbumOfTheMonth } from "@/entities/album/ui/AlbumOfTheMonth";
@@ -19,7 +20,8 @@ import { relativeTime } from "@/shared/lib/relative-time";
 
 const FEATURED_COUNT = 5;
 const REVIEWS_SHOWN = 4;
-const ACTIVITY_SHOWN = 4;
+const ACTIVITY_SHOWN = 5;
+const FEED_LIMIT = 20;
 const LISTS_SHOWN = 6;
 const MOSAIC_COVERS = 4;
 
@@ -73,6 +75,9 @@ export function FeedPage(): JSX.Element {
 
   const [reviewSort, setReviewSort] = useState<ReviewSort>("recent");
   const [isListDialogOpen, setIsListDialogOpen] = useState(false);
+  const [showAllActivity, setShowAllActivity] = useState(false);
+  const { data: feed } = useFeed(FEED_LIMIT, Boolean(currentUser));
+  const feedEvents = feed ?? [];
 
   // A review or a list can point at any album found via search, not just the
   // ones in the curated/chart browse list — resolve those albums by id so
@@ -84,9 +89,17 @@ export function FeedPage(): JSX.Element {
   const listAlbumIds = [...new Set(lists.flatMap((l) => l.albumIds.slice(0, MOSAIC_COVERS)))];
   const { data: listAlbums } = useAlbumsByIds(listAlbumIds);
 
+  // Albums that only the circle's activity points at.
+  const feedAlbumIds = [
+    ...new Set(
+      feedEvents.flatMap((e) => (e.type === "review" ? [e.review.albumId] : e.type === "favorite" ? [e.albumId] : [])),
+    ),
+  ];
+  const { data: feedAlbums } = useAlbumsByIds(feedAlbumIds);
+
   const usersById = new Map((users ?? []).map((u) => [u.id, u]));
   const albumsById = new Map(
-    [...(albums ?? []), ...(reviewAlbums ?? []), ...(listAlbums ?? [])].map((a) => [a.id, a]),
+    [...(albums ?? []), ...(reviewAlbums ?? []), ...(listAlbums ?? []), ...(feedAlbums ?? [])].map((a) => [a.id, a]),
   );
 
   // Real release date now that the catalog comes live, instead of an
@@ -105,11 +118,6 @@ export function FeedPage(): JSX.Element {
     )
     .slice(0, REVIEWS_SHOWN);
 
-  const followingIds = new Set((following ?? []).map((u) => u.id));
-  const activity = [...(reviews ?? [])]
-    .filter((r) => followingIds.has(r.userId))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-    .slice(0, ACTIVITY_SHOWN);
 
   const currentYear = new Date().getFullYear();
   const myListensThisYear = currentUser
@@ -274,59 +282,111 @@ export function FeedPage(): JSX.Element {
               className="order-3 flex flex-col gap-3 lg:order-1 lg:rounded-lg lg:bg-bg-surface lg:p-4"
             >
               <SectionHeader title="Actividad de tu círculo" subtitle="Gente que seguís" />
-              {activity.length === 0 && (
+              {currentUser && feedEvents.length === 0 && (
                 <p className="text-secondary text-text-secondary">
                   {(following ?? []).length === 0
                     ? "Seguí a alguien desde su perfil para ver su actividad acá."
                     : "Todavía no hay actividad reciente."}
                 </p>
               )}
-              {activity.length > 0 && (
-                <ul className="flex flex-col gap-2 lg:gap-4">
-                  {activity.map((review) => {
-                    const author = usersById.get(review.userId);
-                    const album = albumsById.get(review.albumId);
-                    const tag = formatTag(review);
-                    return (
-                      <li key={review.id} className="flex items-start gap-3 rounded-lg bg-bg-surface p-3 lg:bg-transparent lg:p-0">
-                        <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent-strong text-label text-text-primary">
-                          {author?.avatarUrl ? (
-                            <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
-                          ) : author ? (
-                            initials(author.username)
-                          ) : (
-                            "?"
-                          )}
-                        </span>
-                        <div className="flex min-w-0 flex-1 flex-col gap-1">
-                          <p className="text-secondary text-text-secondary">
-                            <Link
-                              to={`/u/${author?.username ?? ""}`}
-                              className={`font-semibold text-text-primary ${focusRing}`}
-                            >
-                              {author?.name ?? "Desconocido"}
-                            </Link>{" "}
-                            <span className="text-text-muted">• escuchó</span>{" "}
-                            <Link to={`/albums/${review.albumId}`} className={`font-semibold text-accent ${focusRing}`}>
-                              {album?.title ?? "un álbum"}
-                            </Link>
-                          </p>
-                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                            <RatingStars value={review.rating} readOnly label="Calificación" />
-                            {tag && (
-                              <span className="rounded-sm bg-bg-hover px-2 py-0.5 text-[10px] uppercase text-accent">
-                                {tag}
-                              </span>
+              {!currentUser && (
+                <p className="text-secondary text-text-secondary">
+                  <Link to="/login" className={`text-accent ${focusRing}`}>
+                    Iniciá sesión
+                  </Link>{" "}
+                  para ver lo que hace la gente que seguís.
+                </p>
+              )}
+              {feedEvents.length > 0 && (
+                <>
+                  <ul className="flex flex-col gap-2 lg:gap-4">
+                    {feedEvents.slice(0, showAllActivity ? FEED_LIMIT : ACTIVITY_SHOWN).map((event) => {
+                      const author = usersById.get(event.userId);
+                      const key =
+                        event.type === "review"
+                          ? `review-${event.review.id}`
+                          : event.type === "list"
+                            ? `list-${event.list.id}`
+                            : `favorite-${event.userId}-${event.albumId}`;
+                      const albumId =
+                        event.type === "review" ? event.review.albumId : event.type === "favorite" ? event.albumId : null;
+                      const album = albumId ? albumsById.get(albumId) : undefined;
+                      const authorLink = (
+                        <Link
+                          to={`/u/${author?.username ?? ""}`}
+                          className={`font-semibold text-text-primary ${focusRing}`}
+                        >
+                          {author?.name ?? "Desconocido"}
+                        </Link>
+                      );
+                      const albumLink = albumId && (
+                        <Link to={`/albums/${albumId}`} className={`font-semibold text-accent ${focusRing}`}>
+                          {album?.title ?? "un álbum"}
+                        </Link>
+                      );
+                      const tag = event.type === "review" ? formatTag(event.review) : null;
+                      return (
+                        <li key={key} className="flex items-start gap-3 rounded-lg bg-bg-surface p-3 lg:bg-transparent lg:p-0">
+                          <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent-strong text-label text-text-primary">
+                            {author?.avatarUrl ? (
+                              <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
+                            ) : author ? (
+                              initials(author.username)
+                            ) : (
+                              "?"
                             )}
-                            <span className="text-label font-normal normal-case tracking-normal text-text-muted">
-                              {relativeTime(review.createdAt)}
-                            </span>
+                          </span>
+                          <div className="flex min-w-0 flex-1 flex-col gap-1">
+                            <p className="text-secondary text-text-secondary">
+                              {authorLink}{" "}
+                              {event.type === "review" && (
+                                <>
+                                  <span className="text-text-muted">• {event.review.isRelisten ? "reescuchó" : "escuchó"}</span>{" "}
+                                  {albumLink}
+                                </>
+                              )}
+                              {event.type === "favorite" && (
+                                <>
+                                  <span className="text-text-muted">• marcó como favorito</span> {albumLink}
+                                </>
+                              )}
+                              {event.type === "list" && (
+                                <>
+                                  <span className="text-text-muted">• creó la lista</span>{" "}
+                                  <span className="font-semibold text-text-primary">{event.list.name}</span>
+                                  <span className="text-text-muted"> ({event.list.albumIds.length})</span>
+                                </>
+                              )}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                              {event.type === "review" && (
+                                <RatingStars value={event.review.rating} readOnly label="Calificación" />
+                              )}
+                              {tag && (
+                                <span className="rounded-sm bg-bg-hover px-2 py-0.5 text-[10px] uppercase text-accent">
+                                  {tag}
+                                </span>
+                              )}
+                              <span className="text-label font-normal normal-case tracking-normal text-text-muted">
+                                {relativeTime(event.at)}
+                              </span>
+                            </div>
                           </div>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {feedEvents.length > ACTIVITY_SHOWN && (
+                    <button
+                      type="button"
+                      onClick={() => setShowAllActivity((v) => !v)}
+                      aria-expanded={showAllActivity}
+                      className={`min-h-11 self-start px-1 text-secondary font-semibold text-accent ${focusRing}`}
+                    >
+                      {showAllActivity ? "Ver menos" : "Ver más"}
+                    </button>
+                  )}
+                </>
               )}
             </section>
 

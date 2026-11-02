@@ -4,11 +4,22 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import type { ListeningFormat } from "@project/shared";
 import { useAlbum, useAlbums } from "@/entities/album/api";
 import { useReviews } from "@/entities/review/api";
-import { useUsers } from "@/entities/user/api";
+import { useFollowing, useUsers } from "@/entities/user/api";
+import { useWatchlist } from "@/entities/watchlist/api";
+import { useReviewLikes } from "@/entities/review-like/api";
+import { useWatchlistAlbum } from "@/features/watchlist-album/useWatchlistAlbum";
+import { useLikeReview } from "@/features/like-review/useLikeReview";
 import { useCurrentUser } from "@/entities/auth/api";
 import { RatingStars } from "@/entities/review/ui/RatingStars";
 import { CommunityReviewCard } from "@/entities/review/ui/CommunityReviewCard";
-import { FORMAT_LABELS, LISTENING_FORMATS, formatTag } from "@/entities/review/format";
+import {
+  FORMAT_LABELS,
+  LISTENING_FORMATS,
+  formatTag,
+  fromDateInputValue,
+  parseTags,
+  toDateInputValue,
+} from "@/entities/review/format";
 import { AlbumCard } from "@/entities/album/ui/AlbumCard";
 import { AlbumSpecs } from "@/entities/album/ui/AlbumSpecs";
 import { TrackList } from "@/entities/album/ui/TrackList";
@@ -44,6 +55,19 @@ function HeartIcon({ filled }: { filled: boolean }): JSX.Element {
     <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} aria-hidden="true">
       <path
         d="M12 20.5s-7-4.35-9.5-8.8C.5 8.5 2 5 5.5 5c2 0 3.5 1.2 4.5 2.7C11 6.2 12.5 5 14.5 5 18 5 19.5 8.5 17.5 11.7 15 16.15 12 20.5 12 20.5z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function BookmarkIcon({ filled }: { filled: boolean }): JSX.Element {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill={filled ? "currentColor" : "none"} aria-hidden="true">
+      <path
+        d="M6 4h12v16.5l-6-4.2-6 4.2V4z"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinejoin="round"
@@ -131,6 +155,8 @@ export function AlbumDetailPage(): JSX.Element {
   const [isRelisten, setIsRelisten] = useState(false);
   const [format, setFormat] = useState<ListeningFormat | "">("");
   const [formatDetail, setFormatDetail] = useState("");
+  const [listenedOn, setListenedOn] = useState(() => toDateInputValue(new Date()));
+  const [tagsText, setTagsText] = useState("");
   const [hasSyncedDraft, setHasSyncedDraft] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [tab, setTab] = useState<AlbumTab>("tracks");
@@ -143,6 +169,8 @@ export function AlbumDetailPage(): JSX.Element {
       setIsRelisten(myReview.isRelisten);
       setFormat(myReview.format ?? "");
       setFormatDetail(myReview.formatDetail ?? "");
+      setListenedOn(toDateInputValue(myReview.listenedAt));
+      setTagsText(myReview.tags.join(", "));
       setHasSyncedDraft(true);
     }
   }, [myReview, hasSyncedDraft]);
@@ -161,6 +189,18 @@ export function AlbumDetailPage(): JSX.Element {
     userId: currentUser?.id ?? "",
     albumId,
   });
+
+  const { data: watchlist } = useWatchlist(currentUser?.username ?? "");
+  const isInWatchlist = Boolean(watchlist?.some((item) => item.albumId === albumId));
+  const watchlistAlbum = useWatchlistAlbum({
+    username: currentUser?.username ?? "",
+    userId: currentUser?.id ?? "",
+    albumId,
+  });
+
+  const { data: reviewLikes } = useReviewLikes(albumId);
+  const likeReview = useLikeReview(albumId, currentUser?.id ?? "");
+  const { data: myFollowing } = useFollowing(currentUser?.username ?? "");
 
   // "More like this": same first genre, best rated, minus the album itself.
   const firstGenre = album?.genres[0];
@@ -248,6 +288,14 @@ export function AlbumDetailPage(): JSX.Element {
         isRelisten,
         format: format || null,
         formatDetail: format ? formatDetail.trim() || null : null,
+        tags: parseTags(tagsText),
+        // Keep the exact original timestamp unless the day itself changed.
+        listenedAt:
+          myReview && toDateInputValue(myReview.listenedAt) === listenedOn
+            ? undefined
+            : listenedOn
+              ? fromDateInputValue(listenedOn)
+              : undefined,
       },
       {
         onSuccess: () => {
@@ -263,6 +311,8 @@ export function AlbumDetailPage(): JSX.Element {
     setIsRelisten(myReview?.isRelisten ?? false);
     setFormat(myReview?.format ?? "");
     setFormatDetail(myReview?.formatDetail ?? "");
+    setListenedOn(toDateInputValue(myReview?.listenedAt ?? new Date()));
+    setTagsText(myReview?.tags.join(", ") ?? "");
   };
 
   const handleStartEdit = (): void => {
@@ -295,6 +345,8 @@ export function AlbumDetailPage(): JSX.Element {
         setIsRelisten(false);
         setFormat("");
         setFormatDetail("");
+        setListenedOn(toDateInputValue(new Date()));
+        setTagsText("");
         setHasSyncedDraft(false);
         setIsEditing(false);
         setStatusMessage("Reseña eliminada.");
@@ -309,6 +361,30 @@ export function AlbumDetailPage(): JSX.Element {
         setStatusMessage(nextIsFavorite ? `${album.title} agregado a favoritos.` : `${album.title} quitado de favoritos.`),
     });
   };
+
+  const handleToggleWatchlist = (): void => {
+    const nextIsSaved = !isInWatchlist;
+    watchlistAlbum.mutate(nextIsSaved, {
+      onSuccess: () =>
+        setStatusMessage(
+          nextIsSaved ? `${album.title} agregado a Para escuchar.` : `${album.title} quitado de Para escuchar.`,
+        ),
+    });
+  };
+
+  const likeCounts = new Map<string, number>();
+  for (const like of reviewLikes ?? []) {
+    likeCounts.set(like.reviewId, (likeCounts.get(like.reviewId) ?? 0) + 1);
+  }
+  const likedByMe = new Set(
+    (reviewLikes ?? []).filter((l) => l.userId === currentUser?.id).map((l) => l.reviewId),
+  );
+
+  // What the people you follow gave this album, best rated first.
+  const followingIds = new Set((myFollowing ?? []).map((u) => u.id));
+  const followedReviews = reviews
+    .filter((r) => followingIds.has(r.userId))
+    .sort((a, b) => b.rating - a.rating);
 
   const handleShare = async (): Promise<void> => {
     try {
@@ -467,7 +543,7 @@ export function AlbumDetailPage(): JSX.Element {
             </p>
           )}
           {currentUser ? (
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-6 gap-2">
               <button
                 type="button"
                 onClick={handleToggleFavorite}
@@ -477,6 +553,16 @@ export function AlbumDetailPage(): JSX.Element {
                 className={`${secondaryAction} w-full ${isFavorite ? "text-danger hover:text-danger" : ""}`}
               >
                 <HeartIcon filled={isFavorite} />
+              </button>
+              <button
+                type="button"
+                onClick={handleToggleWatchlist}
+                disabled={watchlistAlbum.isPending}
+                aria-pressed={isInWatchlist}
+                aria-label={isInWatchlist ? `Quitar ${album.title} de Para escuchar` : `Guardar ${album.title} en Para escuchar`}
+                className={`${secondaryAction} w-full ${isInWatchlist ? "text-accent hover:text-accent" : ""}`}
+              >
+                <BookmarkIcon filled={isInWatchlist} />
               </button>
               <button
                 type="button"
@@ -655,7 +741,15 @@ export function AlbumDetailPage(): JSX.Element {
                   {formatTag(myReview)}
                 </span>
               )}
+              {myReview.tags.map((tag) => (
+                <span key={tag} className="rounded-sm bg-bg-hover px-2 py-0.5 text-label text-text-secondary">
+                  #{tag}
+                </span>
+              ))}
             </div>
+            <p className="text-secondary text-text-muted">
+              Escuchado el {new Date(myReview.listenedAt).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" })}
+            </p>
             <p className="text-body text-text-secondary">
               {myReview.text || <span className="text-text-muted">Sin comentario.</span>}
             </p>
@@ -673,6 +767,27 @@ export function AlbumDetailPage(): JSX.Element {
               className={`min-h-24 rounded bg-bg-raised p-3 text-body text-text-primary ${focusRing}`}
               placeholder="¿Qué te pareció?"
             />
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <label className="flex flex-1 flex-col gap-1.5">
+                <span className="text-label uppercase text-text-muted">Fecha de escucha</span>
+                <input
+                  type="date"
+                  value={listenedOn}
+                  max={toDateInputValue(new Date())}
+                  onChange={(e) => setListenedOn(e.target.value)}
+                  className={`min-h-11 rounded bg-bg-raised px-3 text-body text-text-primary ${focusRing}`}
+                />
+              </label>
+              <label className="flex flex-1 flex-col gap-1.5">
+                <span className="text-label uppercase text-text-muted">Etiquetas (separadas por coma)</span>
+                <input
+                  value={tagsText}
+                  onChange={(e) => setTagsText(e.target.value)}
+                  placeholder="road trip, domingo"
+                  className={`min-h-11 rounded bg-bg-raised px-3 text-body text-text-primary ${focusRing}`}
+                />
+              </label>
+            </div>
             <label className="flex min-h-11 items-center gap-2 text-secondary text-text-secondary">
               <input
                 type="checkbox"
@@ -728,6 +843,41 @@ export function AlbumDetailPage(): JSX.Element {
         )}
       </section>
 
+      {followedReviews.length > 0 && (
+        <section aria-label="Calificado por gente que seguís" className="relative flex flex-col gap-3">
+          <h2 className="text-section-title-lg font-bold text-text-primary">Calificado por gente que seguís</h2>
+          <ul className="flex flex-wrap gap-3">
+            {followedReviews.map((review) => {
+              const author = usersById.get(review.userId);
+              return (
+                <li key={review.id} className="flex items-center gap-2.5 rounded-lg bg-bg-surface py-2 pl-2 pr-4">
+                  <span className="flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-accent-strong text-label text-text-primary">
+                    {author?.avatarUrl ? (
+                      <img src={author.avatarUrl} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      (author?.username ?? "?").slice(0, 2).toUpperCase()
+                    )}
+                  </span>
+                  <div className="flex min-w-0 flex-col">
+                    {author ? (
+                      <Link
+                        to={`/u/${author.username}`}
+                        className={`truncate text-[14px] font-semibold text-text-primary ${focusRing}`}
+                      >
+                        {author.name}
+                      </Link>
+                    ) : (
+                      <span className="truncate text-[14px] font-semibold text-text-primary">Usuario desconocido</span>
+                    )}
+                    <RatingStars value={review.rating} readOnly label={`Calificación de ${author?.name ?? "usuario"}`} />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+
       <section aria-label="Reseñas de la comunidad" className="relative flex flex-col gap-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2">
@@ -755,6 +905,13 @@ export function AlbumDetailPage(): JSX.Element {
                 key={review.id}
                 review={review}
                 author={usersById.get(review.userId)}
+                likeCount={likeCounts.get(review.id) ?? 0}
+                isLiked={likedByMe.has(review.id)}
+                onToggleLike={
+                  currentUser && review.userId !== currentUser.id
+                    ? () => likeReview.mutate({ reviewId: review.id, nextIsLiked: !likedByMe.has(review.id) })
+                    : undefined
+                }
                 className={!showAllReviews && index >= REVIEWS_COLLAPSED_MOBILE ? "hidden lg:flex" : "flex"}
               />
             ))}

@@ -1,5 +1,8 @@
 import { Module } from "@nestjs/common";
 import { ReviewModule } from "@/modules/review/review.module";
+import { ArtistController } from "./infrastructure/http/artist.controller";
+import { ArtistCatalog } from "./infrastructure/artist-catalog";
+import { GetArtistUseCase } from "./application/get-artist.use-case";
 import { AlbumController } from "./infrastructure/http/album.controller";
 import { AlbumRepository } from "./domain/album.repository";
 import { AlbumOverlayRepository } from "./domain/album-overlay.repository";
@@ -14,7 +17,7 @@ import { GetAlbumUseCase } from "./application/get-album.use-case";
 
 @Module({
   imports: [ReviewModule],
-  controllers: [AlbumController],
+  controllers: [AlbumController, ArtistController],
   providers: [
     ItunesClient,
     { provide: AlbumOverlayRepository, useClass: MysqlAlbumOverlayRepository },
@@ -24,6 +27,8 @@ import { GetAlbumUseCase } from "./application/get-album.use-case";
     { provide: AlbumRepository, useClass: CatalogAlbumRepository },
     ListAlbumsUseCase,
     GetAlbumUseCase,
+    ArtistCatalog,
+    GetArtistUseCase,
   ],
 })
 export class AlbumModule {}

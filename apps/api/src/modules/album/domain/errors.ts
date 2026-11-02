@@ -6,3 +6,10 @@ export class AlbumNotFoundError extends NotFoundError {
     this.name = "AlbumNotFoundError";
   }
 }
+
+export class ArtistNotFoundError extends NotFoundError {
+  constructor(slug: string) {
+    super(`Artist ${slug} not found`);
+    this.name = "ArtistNotFoundError";
+  }
+}

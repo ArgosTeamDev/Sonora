@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
-import type { Favorite, Review, UpdateUserDto, User } from "@project/shared";
+import type { Favorite, ProfileTopDto, Review, UpdateUserDto, User, WatchlistItem } from "@project/shared";
 import { ReviewRepository } from "@/modules/review/domain/review.repository";
 import { UserRepository } from "./user.repository";
 
@@ -40,6 +40,22 @@ export class UserService {
   async getFavorites(username: string): Promise<Favorite[]> {
     const user = await this.getByUsername(username);
     return this.users.findFavorites(user.id);
+  }
+
+  async getWatchlist(username: string): Promise<WatchlistItem[]> {
+    const user = await this.getByUsername(username);
+    return this.users.findWatchlist(user.id);
+  }
+
+  async getTop(username: string): Promise<string[]> {
+    const user = await this.getByUsername(username);
+    return this.users.findTop(user.id);
+  }
+
+  async setTop(username: string, dto: ProfileTopDto): Promise<string[]> {
+    const user = await this.getByUsername(username);
+    await this.users.setTop(user.id, dto.albumIds);
+    return dto.albumIds;
   }
 
   async update(username: string, dto: UpdateUserDto): Promise<User> {

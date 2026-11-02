@@ -12,13 +12,14 @@ interface ReviewRow {
   is_relisten: number;
   format: ListeningFormat | null;
   format_detail: string | null;
+  tags: string[] | null; // JSON column: mysql2 hands it back already parsed
   listened_at: Date;
   version: number;
   created_at: Date;
   updated_at: Date;
 }
 
-const COLUMNS = "id, user_id, album_id, rating, `text`, is_relisten, format, format_detail, listened_at, version, created_at, updated_at";
+const COLUMNS = "id, user_id, album_id, rating, `text`, is_relisten, format, format_detail, tags, listened_at, version, created_at, updated_at";
 
 function toReview(row: ReviewRow): Review {
   return {
@@ -30,6 +31,7 @@ function toReview(row: ReviewRow): Review {
     isRelisten: Boolean(row.is_relisten),
     format: row.format,
     formatDetail: row.format_detail,
+    tags: row.tags ?? [],
     listenedAt: row.listened_at,
     version: row.version,
     createdAt: row.created_at,
@@ -61,6 +63,16 @@ export class MysqlReviewRepository extends ReviewRepository {
     return rows.map(toReview);
   }
 
+  async findByFollowedBy(userId: string, limit: number): Promise<Review[]> {
+    const rows = await this.db.select<ReviewRow>(
+      `SELECT ${COLUMNS} FROM reviews
+       WHERE user_id IN (SELECT following_id FROM follows WHERE follower_id = ?)
+       ORDER BY created_at DESC LIMIT ?`,
+      [userId, limit],
+    );
+    return rows.map(toReview);
+  }
+
   async findByUserAndAlbum(userId: string, albumId: string): Promise<Review | null> {
     const rows = await this.db.select<ReviewRow>(
       `SELECT ${COLUMNS} FROM reviews WHERE user_id = ? AND album_id = ?`,
@@ -71,13 +83,14 @@ export class MysqlReviewRepository extends ReviewRepository {
 
   async save(review: Review): Promise<void> {
     await this.db.execute(
-      `INSERT INTO reviews (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `INSERT INTO reviews (${COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON DUPLICATE KEY UPDATE
          rating = VALUES(rating),
          \`text\` = VALUES(\`text\`),
          is_relisten = VALUES(is_relisten),
          format = VALUES(format),
          format_detail = VALUES(format_detail),
+         tags = VALUES(tags),
          listened_at = VALUES(listened_at),
          version = VALUES(version),
          updated_at = VALUES(updated_at)`,
@@ -90,6 +103,7 @@ export class MysqlReviewRepository extends ReviewRepository {
         review.isRelisten,
         review.format,
         review.formatDetail,
+        JSON.stringify(review.tags),
         review.listenedAt,
         review.version,
         review.createdAt,
