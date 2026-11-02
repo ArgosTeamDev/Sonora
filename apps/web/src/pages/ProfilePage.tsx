@@ -460,20 +460,6 @@ export function ProfilePage(): JSX.Element {
           ) : (
             <>
               {user.bio && <p className="text-[14px] leading-[22px] text-text-secondary">{user.bio}</p>}
-              {isOwnProfile && (
-                <Button variant="secondary" onClick={() => setIsLogoutOpen(true)} className="self-start gap-2">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  Cerrar sesión
-                </Button>
-              )}
             </>
           )}
         </header>
@@ -683,6 +669,25 @@ export function ProfilePage(): JSX.Element {
             Has registrado <span className="font-semibold text-accent">{loggedThisMonth} {loggedThisMonth === 1 ? "álbum" : "álbumes"}</span>{" "}
             en lo que va de este mes. ¡Sigue así!
           </p>
+        )}
+
+        {isOwnProfile && (
+          <button
+            type="button"
+            onClick={() => setIsLogoutOpen(true)}
+            className={`mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-secondary font-medium text-danger hover:bg-bg-hover/40 ${focusRing}`}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path
+                d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Cerrar sesión
+          </button>
         )}
       </div>
       {isLogoutOpen && <LogoutDialog onClose={() => setIsLogoutOpen(false)} />}

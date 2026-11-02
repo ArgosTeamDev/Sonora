@@ -22,9 +22,12 @@ export function useLogout() {
   return useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      // Clears every cache, not just the session — the next login could be
-      // a different account, and nothing here should leak between users.
-      queryClient.clear();
+      // Drops every cached result, not just the session — the next login could
+      // be a different account, and nothing here should leak between users.
+      // resetQueries (not clear) because it also notifies mounted components:
+      // the nav and profile re-read /auth/me, get a 401 and flip to logged-out
+      // right away instead of showing the old user until a hard reload.
+      void queryClient.resetQueries();
     },
   });
 }
