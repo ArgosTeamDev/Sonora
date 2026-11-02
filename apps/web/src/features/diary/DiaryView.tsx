@@ -65,7 +65,7 @@ export function DiaryView({ reviews, albumsById }: DiaryViewProps): JSX.Element 
 
   return (
     <section aria-label="Diario" className="flex flex-col gap-4">
-      <div role="group" aria-label="Año del diario" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+      <div role="group" aria-label="Año del diario" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
         {years.map((y) => (
           <button key={y} type="button" onClick={() => setPickedYear(y)} aria-pressed={y === year} className={chip(y === year)}>
             {y}
@@ -74,7 +74,7 @@ export function DiaryView({ reviews, albumsById }: DiaryViewProps): JSX.Element 
       </div>
 
       {tags.length > 0 && (
-        <div role="group" aria-label="Filtrar por etiqueta" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div role="group" aria-label="Filtrar por etiqueta" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           <button type="button" onClick={() => setPickedTag(null)} aria-pressed={activeTag === null} className={chip(activeTag === null)}>
             Todas
           </button>

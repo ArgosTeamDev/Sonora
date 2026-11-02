@@ -1,3 +1,5 @@
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { PageSkeleton } from "@/shared/ui/Skeleton";
 import { useState } from "react";
 import type { JSX } from "react";
 import { useNavigate } from "react-router-dom";
@@ -36,7 +38,7 @@ export function MyReviewsPage(): JSX.Element {
   const { data: albums } = useAlbumsByIds([...new Set(myReviews.map((r) => r.albumId))]);
 
   if (isLoading) {
-    return <p className="px-4 pt-8 text-body text-text-secondary">Cargando tus reseñas…</p>;
+    return <PageSkeleton label="Cargando tus reseñas…" rows={4} />;
   }
   if (isError) {
     return (
@@ -94,7 +96,11 @@ export function MyReviewsPage(): JSX.Element {
       </header>
 
       {myReviews.length === 0 && (
-        <p className="text-body text-text-secondary">Todavía no reseñaste nada.</p>
+        <EmptyState
+          title="Todavía no has reseñado nada"
+          description="Califica tu primer álbum y empieza tu diario musical."
+          action={{ label: "Explorar álbumes", to: "/explore" }}
+        />
       )}
 
       {sorted.length > 0 && (

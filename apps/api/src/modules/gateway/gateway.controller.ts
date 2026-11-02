@@ -43,6 +43,11 @@ export class GatewayController {
         method: route.method,
         headers: {
           ...(req.headers.cookie ? { cookie: req.headers.cookie } : {}),
+          // The inner request comes from 127.0.0.1: pass the real client IP
+          // and protocol along so rate limiting and the Secure cookie flag
+          // see the original request, not the loopback hop.
+          "x-forwarded-for": req.ip ?? "",
+          "x-forwarded-proto": req.protocol,
           ...(route.method !== "GET" ? { "content-type": "application/json" } : {}),
         },
         body: route.method === "GET" || route.method === "DELETE" ? undefined : JSON.stringify(body),

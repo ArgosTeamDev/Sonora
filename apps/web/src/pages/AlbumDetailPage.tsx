@@ -29,6 +29,7 @@ import { useDeleteReview } from "@/features/delete-review/useDeleteReview";
 import { useFavoriteAlbum } from "@/features/favorite-album/useFavoriteAlbum";
 import { AddToListDialog } from "@/features/add-to-list/AddToListDialog";
 import { HttpError } from "@/shared/api/http";
+import { PageSkeleton } from "@/shared/ui/Skeleton";
 import { Button } from "@/shared/ui/Button";
 
 const focusRing =
@@ -208,7 +209,7 @@ export function AlbumDetailPage(): JSX.Element {
   const similarAlbums = (similarCandidates ?? []).filter((a) => a.id !== albumId).slice(0, SIMILAR_ALBUMS);
 
   if (isLoading) {
-    return <p className="px-4 pt-8 text-body text-text-secondary">Cargando álbum…</p>;
+    return <PageSkeleton label="Cargando álbum…" rows={3} />;
   }
   if (isError || !album) {
     return (

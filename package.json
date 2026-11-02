@@ -9,6 +9,7 @@
     "dev": "turbo run dev",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
+    "test": "pnpm --filter @project/shared test",
     "setup": "pnpm install && pnpm db:up && pnpm db:migrate",
     "db:up": "docker compose up -d db",
     "db:reset": "docker compose down -v && docker compose up -d db",

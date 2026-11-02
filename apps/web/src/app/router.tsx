@@ -9,6 +9,7 @@ import { ReviewPage } from "@/pages/ReviewPage";
 import { MyReviewsPage } from "@/pages/MyReviewsPage";
 import { PeoplePage } from "@/pages/PeoplePage";
 import { LoginPage } from "@/pages/LoginPage";
+import { SettingsPage } from "@/pages/SettingsPage";
 
 export const router = createHashRouter([
   {
@@ -24,6 +25,7 @@ export const router = createHashRouter([
       { path: "my-reviews", element: <MyReviewsPage /> },
       { path: "people", element: <PeoplePage /> },
       { path: "login", element: <LoginPage /> },
+      { path: "settings", element: <SettingsPage /> },
     ],
   },
 ]);

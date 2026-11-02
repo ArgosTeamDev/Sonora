@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import type { LoginDto, RegisterDto, User } from "@project/shared";
+import type { ChangePasswordDto, DeleteAccountDto, LoginDto, RegisterDto, User } from "@project/shared";
 import { http } from "@/shared/api/http";
 
 export const authKeys = {
@@ -20,6 +20,14 @@ export function login(dto: LoginDto): Promise<User> {
 
 export function logout(): Promise<{ ok: true }> {
   return http.post<{ ok: true }>("/auth/logout", {});
+}
+
+export function changePassword(dto: ChangePasswordDto): Promise<{ ok: true }> {
+  return http.post<{ ok: true }>("/auth/password", dto);
+}
+
+export function deleteAccount(dto: DeleteAccountDto): Promise<{ ok: true }> {
+  return http.post<{ ok: true }>("/auth/delete-account", dto);
 }
 
 // A 401 here just means "not logged in" — not worth retrying. Callers treat

@@ -1,3 +1,4 @@
+import { EmptyState } from "@/shared/ui/EmptyState";
 import { useState } from "react";
 import type { JSX } from "react";
 import { Link } from "react-router-dom";
@@ -192,7 +193,7 @@ export function FeedPage(): JSX.Element {
                 }
               />
               {featured.length > 0 && (
-                <ul className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-5 lg:overflow-visible lg:px-0">
+                <ul className="no-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-5 lg:overflow-visible lg:px-0">
                   {featured.map((album) => (
                     <li key={album.id} className="w-36 shrink-0 snap-start lg:w-auto">
                       <AlbumShelfItem album={album} size="md" />
@@ -255,7 +256,7 @@ export function FeedPage(): JSX.Element {
             {lists.length > 0 && (
               <section aria-label="Listas de la comunidad" className="order-5 flex flex-col gap-3">
                 <SectionHeader title="Listas curadas" subtitle="Selecciones temáticas de la comunidad" />
-                <ul className="-mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0">
+                <ul className="no-scrollbar -mx-4 flex snap-x gap-4 overflow-x-auto px-4 pb-2 lg:mx-0 lg:grid lg:grid-cols-2 lg:overflow-visible lg:px-0">
                   {lists.map((list) => (
                     <li key={list.id} className="snap-start lg:contents">
                       <ListCard
@@ -283,11 +284,15 @@ export function FeedPage(): JSX.Element {
             >
               <SectionHeader title="Actividad de tu círculo" subtitle="Gente que seguís" />
               {currentUser && feedEvents.length === 0 && (
-                <p className="text-secondary text-text-secondary">
-                  {(following ?? []).length === 0
-                    ? "Seguí a alguien desde su perfil para ver su actividad acá."
-                    : "Todavía no hay actividad reciente."}
-                </p>
+                (following ?? []).length === 0 ? (
+                  <EmptyState
+                    title="Aún no sigues a nadie"
+                    description="Sigue a otros oyentes para ver aquí lo que están escuchando."
+                    action={{ label: "Buscar personas", to: "/people" }}
+                  />
+                ) : (
+                  <p className="text-secondary text-text-secondary">Todavía no hay actividad reciente.</p>
+                )
               )}
               {!currentUser && (
                 <p className="text-secondary text-text-secondary">

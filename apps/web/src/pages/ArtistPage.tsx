@@ -3,13 +3,15 @@ import { useParams } from "react-router-dom";
 import { useArtist } from "@/entities/artist/api";
 import { AlbumCard } from "@/entities/album/ui/AlbumCard";
 import { HttpError } from "@/shared/api/http";
+import { BackButton } from "@/shared/ui/BackButton";
+import { PageSkeleton } from "@/shared/ui/Skeleton";
 
 export function ArtistPage(): JSX.Element {
   const { slug } = useParams<{ slug: string }>();
   const { data, isLoading, isError, error } = useArtist(slug ?? "");
 
   if (isLoading) {
-    return <p className="px-4 pt-8 text-body text-text-secondary">Cargando artista…</p>;
+    return <PageSkeleton label="Cargando artista…" rows={4} />;
   }
   if (isError || !data) {
     const notFound = error instanceof HttpError && error.status === 404;
@@ -28,7 +30,8 @@ export function ArtistPage(): JSX.Element {
   const singles = albums.filter((a) => a.isSingle);
 
   return (
-    <article className="flex flex-col gap-6 px-4 pt-8">
+    <article className="flex flex-col gap-6 px-4 pt-4 md:pt-8">
+      <BackButton />
       <header className="flex flex-col gap-2">
         <h1 className="text-page-title text-text-primary">{artist.name}</h1>
         <p className="text-body text-text-secondary">

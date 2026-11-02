@@ -227,7 +227,7 @@ export function ExplorePage(): JSX.Element {
             />
           </label>
 
-          <div className="flex items-center gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [-ms-overflow-style:none] lg:justify-between [&::-webkit-scrollbar]:hidden">
+          <div className="flex items-center gap-2 no-scrollbar overflow-x-auto pb-1 lg:justify-between">
             <span className="shrink-0 pr-1 text-label uppercase text-text-muted">Época:</span>
             <div className="flex snap-x gap-1.5">
               <Button

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { authKeys, login, logout, register } from "@/entities/auth/api";
+import { authKeys, changePassword, deleteAccount, login, logout, register } from "@/entities/auth/api";
 
 export function useRegister() {
   const queryClient = useQueryClient();
@@ -27,6 +27,21 @@ export function useLogout() {
       // resetQueries (not clear) because it also notifies mounted components:
       // the nav and profile re-read /auth/me, get a 401 and flip to logged-out
       // right away instead of showing the old user until a hard reload.
+      void queryClient.resetQueries();
+    },
+  });
+}
+
+export function useChangePassword() {
+  return useMutation({ mutationFn: changePassword });
+}
+
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteAccount,
+    // The account is gone and the cookie cleared: same reset as logging out.
+    onSuccess: () => {
       void queryClient.resetQueries();
     },
   });

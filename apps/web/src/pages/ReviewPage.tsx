@@ -4,6 +4,8 @@ import { useReview } from "@/entities/review/api";
 import { useAlbum } from "@/entities/album/api";
 import { useUsers } from "@/entities/user/api";
 import { RatingStars } from "@/entities/review/ui/RatingStars";
+import { BackButton } from "@/shared/ui/BackButton";
+import { PageSkeleton } from "@/shared/ui/Skeleton";
 
 export function ReviewPage(): JSX.Element {
   const { id } = useParams<{ id: string }>();
@@ -12,7 +14,7 @@ export function ReviewPage(): JSX.Element {
   const { data: users } = useUsers();
 
   if (isLoading) {
-    return <p className="px-4 pt-8 text-body text-text-secondary">Cargando reseña…</p>;
+    return <PageSkeleton label="Cargando reseña…" rows={2} />;
   }
   if (isError || !review) {
     return (
@@ -27,7 +29,8 @@ export function ReviewPage(): JSX.Element {
     "outline-none rounded focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg-base";
 
   return (
-    <article className="flex flex-col gap-4 px-4 pt-8">
+    <article className="flex flex-col gap-4 px-4 pt-4 md:pt-8">
+      <BackButton />
       <div>
         <h1 className="text-page-title text-text-primary">
           {album ? (

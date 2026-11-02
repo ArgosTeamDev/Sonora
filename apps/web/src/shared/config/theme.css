@@ -35,3 +35,14 @@ body {
   color: var(--text-primary);
   font-family: "Plus Jakarta Sans", system-ui, sans-serif;
 }
+
+/* Horizontal chip/card rows keep swiping but hide the native scrollbar. */
+@layer utilities {
+  .no-scrollbar {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}

@@ -19,3 +19,15 @@ export const LoginDtoSchema = z.object({
   remember: z.boolean().default(true),
 });
 export type LoginDto = z.infer<typeof LoginDtoSchema>;
+
+export const ChangePasswordDtoSchema = z.object({
+  currentPassword: z.string().min(1, "Ingresá tu contraseña actual."),
+  newPassword: RegisterDtoSchema.shape.password,
+});
+export type ChangePasswordDto = z.infer<typeof ChangePasswordDtoSchema>;
+
+// Deleting is irreversible, so it re-asks for the password.
+export const DeleteAccountDtoSchema = z.object({
+  password: z.string().min(1, "Ingresá tu contraseña para confirmar."),
+});
+export type DeleteAccountDto = z.infer<typeof DeleteAccountDtoSchema>;

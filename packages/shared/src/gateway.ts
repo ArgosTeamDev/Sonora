@@ -9,6 +9,8 @@ export const ROUTES: Record<string, { method: GatewayMethod; path: string }> = {
   login: { method: "POST", path: "/auth/login" },
   logout: { method: "POST", path: "/auth/logout" },
   registrar_usuario: { method: "POST", path: "/auth/register" },
+  cambiar_password: { method: "POST", path: "/auth/password" },
+  eliminar_cuenta: { method: "POST", path: "/auth/delete-account" },
 
   // Reseñas
   listar_resenas: { method: "GET", path: "/reviews" },

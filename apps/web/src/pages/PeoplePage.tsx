@@ -1,3 +1,4 @@
+import { BackButton } from "@/shared/ui/BackButton";
 import { useEffect, useState } from "react";
 import type { JSX } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -49,7 +50,8 @@ export function PeoplePage(): JSX.Element {
   const isSearching = query.trim().length > 0;
 
   return (
-    <div className="flex flex-col gap-6 px-4 pb-8 pt-8 lg:px-6">
+    <div className="flex flex-col gap-6 px-4 pb-8 pt-4 md:pt-8 lg:px-6">
+      <BackButton />
       <header className="flex flex-col gap-2">
         <h1 className="text-page-title text-text-primary md:text-page-title-lg">Personas</h1>
         <p className="text-body text-text-secondary">Encuentra a otros oyentes por nombre o usuario y sigue su diario.</p>

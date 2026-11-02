@@ -1,25 +1,32 @@
 import type { JSX } from "react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "@/shared/ui/BottomNav";
 import { TopNav } from "@/shared/ui/TopNav";
 import { SkipLink } from "@/shared/ui/SkipLink";
 import { Footer } from "@/shared/ui/Footer";
+import { ErrorBoundary } from "@/shared/ui/ErrorBoundary";
+import { OfflineBanner } from "@/shared/ui/OfflineBanner";
 import { AccountMenu } from "@/features/auth/AccountMenu";
 import { PlayerProvider } from "@/shared/player/PlayerContext";
 import { NowPlayingBar } from "@/shared/player/NowPlayingBar";
 
 export function RootLayout(): JSX.Element {
+  const { pathname } = useLocation();
   return (
     <PlayerProvider>
       <div className="min-h-dvh bg-bg-base text-text-primary">
         <SkipLink />
+        <OfflineBanner />
         <TopNav accountMenu={(user) => <AccountMenu user={user} />} />
         <main id="main-content">
           {/* Every page's content shares this max-width with TopNav's inner
               container, so headings/cards/buttons line up under the logo and
               the nav links instead of stretching edge-to-edge on wide screens. */}
           <div className="mx-auto max-w-6xl">
-            <Outlet />
+            {/* Keyed by route so leaving a crashed page clears the error. */}
+            <ErrorBoundary key={pathname}>
+              <Outlet />
+            </ErrorBoundary>
           </div>
         </main>
         {/* The bottom-nav clearance moves here since Footer, not main, is

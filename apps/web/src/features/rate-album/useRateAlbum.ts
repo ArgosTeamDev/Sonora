@@ -108,6 +108,10 @@ export function useRateAlbum({ userId, albumId, existingReview }: UseRateAlbumPa
       }
     },
 
+    // Profiles read per-user lists; refetch them so a new or edited rating
+    // shows up there too.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: reviewKeys.usersPrefix() }),
+
     onSuccess: (review) => {
       queryClient.setQueryData<Review[]>(listKey, (current) => {
         if (!current) return current;

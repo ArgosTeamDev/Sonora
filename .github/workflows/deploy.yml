@@ -5,7 +5,37 @@ on:
     branches: [main]
 
 jobs:
+  # Corre antes de tocar el servidor: si no compila o no pasan los tipos,
+  # no se despliega nada.
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Compilar paquete compartido
+        run: pnpm --filter @project/shared build
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Tests
+        run: pnpm test
+
+      - name: Build
+        run: pnpm --filter api build && pnpm --filter web build
+
   deploy:
+    needs: verify
     runs-on: ubuntu-latest
 
     steps:

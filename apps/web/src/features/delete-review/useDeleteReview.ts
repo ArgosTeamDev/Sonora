@@ -20,6 +20,11 @@ export function useDeleteReview() {
         current ? current.filter((r) => r.id !== reviewId) : current,
       );
 
+      // Profiles read a per-user list: drop the review there too.
+      queryClient.setQueriesData<Review[]>({ queryKey: reviewKeys.usersPrefix() }, (current) =>
+        current ? current.filter((r) => r.id !== reviewId) : current,
+      );
+
       return { previousList };
     },
 
@@ -28,5 +33,9 @@ export function useDeleteReview() {
         queryClient.setQueryData(listKey, context.previousList);
       }
     },
+
+    // Re-read whatever the server actually has (also restores the per-user
+    // lists if the delete failed).
+    onSettled: () => queryClient.invalidateQueries({ queryKey: reviewKeys.usersPrefix() }),
   });
 }

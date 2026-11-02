@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { JSX } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { EmptyState } from "@/shared/ui/EmptyState";
+import { PageSkeleton } from "@/shared/ui/Skeleton";
 import { useFollowers, useFollowing, useUser } from "@/entities/user/api";
 import { useCurrentUser } from "@/entities/auth/api";
 import { AlbumShelfItem } from "@/entities/album/ui/AlbumShelfItem";
 import { useAlbumsByIds } from "@/entities/album/api";
-import { useReviews } from "@/entities/review/api";
+import { useUserReviews } from "@/entities/review/api";
 import { FORMAT_LABELS } from "@/entities/review/format";
 import { useLists } from "@/entities/list/api";
 import { ReviewRow } from "@/entities/review/ui/ReviewRow";
@@ -17,7 +19,6 @@ import { useFollowUser } from "@/features/follow-user/useFollowUser";
 import { useEditProfile } from "@/features/edit-profile/useEditProfile";
 import { useDeleteReview } from "@/features/delete-review/useDeleteReview";
 import { FavoriteReviewRow } from "@/features/favorite-album/FavoriteReviewRow";
-import { LogoutDialog } from "@/features/auth/LogoutDialog";
 import { FollowListDialog, type FollowListTab } from "@/features/follow-user/FollowListDialog";
 import { Button } from "@/shared/ui/Button";
 import { PHYSICAL_FORMATS, type ListeningFormat, type Review, type User } from "@project/shared";
@@ -97,6 +98,20 @@ function ShareIcon(): JSX.Element {
   );
 }
 
+function SettingsIcon(): JSX.Element {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.8" />
+      <path
+        d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09A1.7 1.7 0 0 0 19.4 15z"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function HeartIcon(): JSX.Element {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -140,11 +155,11 @@ export function ProfilePage(): JSX.Element {
   const navigate = useNavigate();
   const { username } = useParams<{ username: string }>();
   const { data: user, isLoading: userLoading, isError: userError } = useUser(username ?? "");
-  // Same global list the rate/delete mutations patch (see MyReviewsPage),
-  // filtered to this profile's user — so editing or deleting a review from
-  // any other page is reflected here immediately too.
-  const { data: allReviews, isLoading: reviewsLoading } = useReviews();
-  const reviews = (allReviews ?? []).filter((r) => r.userId === user?.id);
+  // Only this user's reviews (not every review in the app). The rate/delete
+  // mutations patch or invalidate this per-user list, so editing or deleting
+  // from any other page is reflected here too.
+  const { data: userReviews, isLoading: reviewsLoading } = useUserReviews(username ?? "");
+  const reviews = userReviews ?? [];
   const { data: favoriteEntries } = useFavorites(username ?? "");
   // A review or a favorite can point at any album found via search, not
   // just a curated one — resolve exactly the ids these need instead of
@@ -174,7 +189,6 @@ export function ProfilePage(): JSX.Element {
   });
   const deleteReview = useDeleteReview();
   const editProfile = useEditProfile(username ?? "");
-  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
   const [isEditing, setIsEditing] = useState(false);
   const [draftName, setDraftName] = useState("");
@@ -184,8 +198,22 @@ export function ProfilePage(): JSX.Element {
   const [draftBadge, setDraftBadge] = useState("");
   const [tab, setTab] = useState<ProfileTab>("diary");
 
+  // "Editar perfil" in Ajustes lands here with ?edit=1: open the editor once,
+  // then drop the param so a refresh doesn't reopen it.
+  const [searchParams, setSearchParams] = useSearchParams();
+  useEffect(() => {
+    if (!searchParams.has("edit") || !user || !isOwnProfile) return;
+    setDraftName(user.name);
+    setDraftBio(user.bio ?? "");
+    setDraftAvatarUrl(user.avatarUrl ?? "");
+    setDraftLocation(user.location ?? "");
+    setDraftBadge(user.badge ?? "");
+    setIsEditing(true);
+    setSearchParams({}, { replace: true });
+  }, [searchParams, setSearchParams, user, isOwnProfile]);
+
   if (userLoading) {
-    return <p className="px-4 pt-8 text-body text-text-secondary">Cargando perfil…</p>;
+    return <PageSkeleton label="Cargando perfil…" rows={2} withAvatar />;
   }
   if (userError || !user) {
     return (
@@ -309,7 +337,7 @@ export function ProfilePage(): JSX.Element {
         )}
       </div>
 
-      <div className="-mt-12 flex flex-col gap-6 px-4">
+      <div className="relative -mt-12 flex flex-col gap-6 px-4 sm:px-6">
         <header className="flex flex-col gap-2">
           <div className="flex items-end justify-between gap-4">
             <div className="relative flex size-20 shrink-0 items-center justify-center overflow-hidden rounded-xl border-4 border-bg-base bg-accent-strong text-section-title-lg text-text-primary shadow-xl">
@@ -320,7 +348,7 @@ export function ProfilePage(): JSX.Element {
               )}
             </div>
             {!isEditing && (
-              <div className="flex shrink-0 items-center gap-2 pb-1">
+              <div className="flex min-w-0 flex-wrap items-center justify-end gap-2 pb-1">
                 {isOwnProfile && (
                   <Button variant="secondary" onClick={handleStartEdit}>
                     Editar perfil
@@ -335,6 +363,11 @@ export function ProfilePage(): JSX.Element {
                   >
                     {isFollowing ? "Siguiendo" : "Seguir"}
                   </Button>
+                )}
+                {isOwnProfile && (
+                  <Link to="/settings" aria-label="Ajustes" className={iconButton}>
+                    <SettingsIcon />
+                  </Link>
                 )}
                 <Link to="/people" aria-label="Buscar perfiles" className={iconButton}>
                   <SearchIcon />
@@ -557,7 +590,7 @@ export function ProfilePage(): JSX.Element {
           </section>
         )}
 
-        <div role="group" aria-label="Secciones del perfil" className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+        <div role="group" aria-label="Secciones del perfil" className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {(
             [
               ["diary", "Diario"],
@@ -628,13 +661,23 @@ export function ProfilePage(): JSX.Element {
             </div>
             {reviewsLoading && <p className="text-body text-text-secondary">Cargando reseñas…</p>}
             {!reviewsLoading && visibleReviews.length === 0 && (
-              <p className="text-body text-text-secondary">
-                {tab === "collection"
-                  ? "Todavía no hay discos físicos (vinilo, cassette o CD) en la colección."
-                  : tab === "reviews"
-                    ? "Todavía no hay reseñas escritas."
-                    : "Todavía no hay entradas."}
-              </p>
+              <EmptyState
+                title={
+                  tab === "collection"
+                    ? "Sin discos físicos todavía"
+                    : tab === "reviews"
+                      ? "Sin reseñas escritas todavía"
+                      : "El diario está vacío"
+                }
+                description={
+                  tab === "collection"
+                    ? "Aquí aparecen los álbumes que escuchaste en vinilo, cassette o CD."
+                    : tab === "reviews"
+                      ? "Las reseñas con texto aparecen aquí."
+                      : undefined
+                }
+                action={isOwnProfile ? { label: "Explorar álbumes", to: "/explore" } : undefined}
+              />
             )}
             {visibleReviews.length > 0 && (
               <ul className="flex flex-col gap-3">
@@ -670,27 +713,7 @@ export function ProfilePage(): JSX.Element {
             en lo que va de este mes. ¡Sigue así!
           </p>
         )}
-
-        {isOwnProfile && (
-          <button
-            type="button"
-            onClick={() => setIsLogoutOpen(true)}
-            className={`mt-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 text-secondary font-medium text-danger hover:bg-bg-hover/40 ${focusRing}`}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path
-                d="M10 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4M15 8l4 4-4 4M19 12H9"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            Cerrar sesión
-          </button>
-        )}
       </div>
-      {isLogoutOpen && <LogoutDialog onClose={() => setIsLogoutOpen(false)} />}
     </article>
   );
 }

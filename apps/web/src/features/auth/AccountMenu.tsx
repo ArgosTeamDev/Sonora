@@ -26,6 +26,16 @@ function BookmarkIcon(): JSX.Element {
   );
 }
 
+function SettingsIcon(): JSX.Element {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M4 7h10M18 7h2M4 17h2M10 17h10" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+      <circle cx="16" cy="7" r="2" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="8" cy="17" r="2" stroke="currentColor" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
 function LogoutIcon(): JSX.Element {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -100,6 +110,10 @@ export function AccountMenu({ user }: { user: User }): JSX.Element {
           <Link to="/my-reviews" role="menuitem" onClick={() => setIsOpen(false)} className={itemClass}>
             <BookmarkIcon />
             Mis reseñas
+          </Link>
+          <Link to="/settings" role="menuitem" onClick={() => setIsOpen(false)} className={itemClass}>
+            <SettingsIcon />
+            Ajustes
           </Link>
           <div className="h-px bg-border/60" role="separator" />
           <button

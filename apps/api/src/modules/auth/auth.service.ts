@@ -1,6 +1,6 @@
 import { ConflictException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { randomUUID } from "node:crypto";
-import type { LoginDto, RegisterDto, User } from "@project/shared";
+import type { ChangePasswordDto, DeleteAccountDto, LoginDto, RegisterDto, User } from "@project/shared";
 import { UserRepository } from "@/modules/user/user.repository";
 import { hashPassword, verifyPassword } from "@/shared/auth/password";
 import { signToken } from "@/shared/auth/jwt";
@@ -53,6 +53,23 @@ export class AuthService {
 
     const { passwordHash: _passwordHash, ...publicUser } = user;
     return { user: publicUser, token: signToken({ sub: user.id, username: user.username }, dto.remember) };
+  }
+
+  private async assertPassword(userId: string, password: string): Promise<void> {
+    const hash = await this.users.findPasswordHashById(userId);
+    if (!hash || !verifyPassword(password, hash)) {
+      throw new UnauthorizedException({ code: "INVALID_CREDENTIALS", message: "La contraseña es incorrecta." });
+    }
+  }
+
+  async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
+    await this.assertPassword(userId, dto.currentPassword);
+    await this.users.updatePasswordHash(userId, hashPassword(dto.newPassword));
+  }
+
+  async deleteAccount(userId: string, dto: DeleteAccountDto): Promise<void> {
+    await this.assertPassword(userId, dto.password);
+    await this.users.deleteById(userId);
   }
 
   me(userId: string): Promise<User | null> {

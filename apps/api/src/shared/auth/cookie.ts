@@ -8,6 +8,10 @@ export function setAuthCookie(res: Response, token: string, remember = true): vo
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
+    // Secure whenever the request really came in over HTTPS (req.secure
+    // honours X-Forwarded-Proto via "trust proxy"), so plain-http local dev
+    // keeps working without a NODE_ENV switch.
+    secure: res.req.secure,
     ...(remember ? { maxAge: MAX_AGE_MS } : {}),
     path: "/",
   });

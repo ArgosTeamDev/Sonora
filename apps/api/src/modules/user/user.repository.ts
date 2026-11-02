@@ -80,6 +80,22 @@ export class UserRepository {
     return rows[0] ? toUserWithPasswordHash(rows[0]) : null;
   }
 
+  async findPasswordHashById(id: string): Promise<string | null> {
+    const rows = await this.db.select<{ password_hash: string }>(`SELECT password_hash FROM users WHERE id = ?`, [id]);
+    return rows[0]?.password_hash ?? null;
+  }
+
+  async updatePasswordHash(id: string, passwordHash: string): Promise<void> {
+    await this.db.execute(`UPDATE users SET password_hash = ? WHERE id = ?`, [passwordHash, id]);
+  }
+
+  // Every table that references users has ON DELETE CASCADE, so this one
+  // statement also removes the account's reviews, follows, favorites, lists,
+  // watchlist, likes and top.
+  async deleteById(id: string): Promise<void> {
+    await this.db.execute(`DELETE FROM users WHERE id = ?`, [id]);
+  }
+
   async existsByEmail(email: string): Promise<boolean> {
     const rows = await this.db.select(`SELECT 1 FROM users WHERE email = ?`, [email]);
     return rows.length > 0;
