@@ -22,7 +22,8 @@ jobs:
             set -e
             git config --global --add safe.directory ${{ secrets.API_PATH }}
             cd ${{ secrets.API_PATH }}
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             pnpm install
             pnpm --filter @project/shared build
             pnpm --filter api build
